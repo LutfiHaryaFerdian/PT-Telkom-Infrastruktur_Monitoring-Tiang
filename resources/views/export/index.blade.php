@@ -65,7 +65,7 @@
                         </div>
                         <div class="col-12 mt-4">
                             <button type="submit" class="btn btn-primary w-100 py-2">
-                                <i class="bi bi-file-earmark-arrow-down me-2"></i>Generate & Antrikan File
+                                <i class="bi bi-file-earmark-arrow-down me-2"></i>Download File Laporan
                             </button>
                         </div>
                     </div>
@@ -80,14 +80,13 @@
                 <h6 class="mb-0"><i class="bi bi-info-circle me-2"></i>Catatan Penggunaan</h6>
             </div>
             <div class="card-body" style="font-size:.875rem">
-                <div class="alert alert-info py-2 mb-3">
-                    <i class="bi bi-info-circle-fill me-2"></i>
-                    <strong>Antrian Export (Queue):</strong> File export di-generate di background job. Silakan periksa folder <code>storage/app/public/exports/{user_id}/</code> secara berkala.
+                <div class="alert alert-success py-2 mb-3">
+                    <i class="bi bi-check-circle-fill me-2"></i>
+                    <strong>Unduh Langsung:</strong> File export akan otomatis di-generate secara real-time dan langsung diunduh oleh browser ke laptop Anda.
                 </div>
                 <h6 class="fw-semibold">Ketentuan Batasan:</h6>
                 <ul>
                     <li>Format <strong>PDF</strong> dibatasi maksimal <strong>1.000 baris</strong> karena keterbatasan memory server untuk render layout PDF. Jika data Anda melebihi jumlah tersebut, silakan gunakan filter tanggal/wilayah atau pilih format <strong>Excel / CSV</strong>.</li>
-                    <li>File export yang dihasilkan hanya disimpan di server selama <strong>24 jam</strong>. Setelah itu, scheduler pembersihan otomatis (<code>cleanup:exports</code>) akan menghapusnya secara permanen untuk menghemat kapasitas disk storage.</li>
                 </ul>
             </div>
         </div>
