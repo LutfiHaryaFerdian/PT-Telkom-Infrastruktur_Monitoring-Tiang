@@ -23,6 +23,7 @@ Route::middleware(['web', 'auth'])->group(function () {
     // === GIS MAP & SEARCH (throttle ketat — query berat) ===
     Route::middleware('throttle:60,1')->group(function () {
         Route::get('/tiang/map', [TiangApiController::class, 'map']);
+        Route::get('/tiang/heatmap', [TiangApiController::class, 'heatmap']);
         Route::get('/tiang/map/bounds', [TiangApiController::class, 'bounds']);
         Route::get('/tiang/{id}', [TiangApiController::class, 'show'])->whereNumber('id');
         Route::get('/search/tiang', [TiangApiController::class, 'search']);

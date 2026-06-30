@@ -335,4 +335,67 @@ class TiangApiController extends Controller
 
         return $this->success(null, 'Foto tiang berhasil diupload.');
     }
+
+    /**
+     * GET /api/tiang/heatmap
+     */
+    public function heatmap(Request $request): JsonResponse
+    {
+        $type = $request->get('type');
+        if (!in_array($type, ['tiang', 'anomali'])) {
+            return $this->error('Parameter type wajib diisi dengan nilai "tiang" atau "anomali"', 422);
+        }
+
+        $query = TiangTelekomunikasi::query()
+            ->whereNull('tiang_telekomunikasi.deleted_at');
+
+        // Apply filters
+        if ($request->filled('district_id')) {
+            $query->whereHas('sto.area', fn($q) => $q->where('district_id', $request->integer('district_id')));
+        }
+        if ($request->filled('area_id')) {
+            $query->whereHas('sto', fn($q) => $q->where('area_id', $request->integer('area_id')));
+        }
+        if ($request->filled('sto_id')) {
+            $query->where('sto_id', $request->integer('sto_id'));
+        }
+        if ($request->filled('has_anomali')) {
+            $query->where('has_anomali', filter_var($request->get('has_anomali'), FILTER_VALIDATE_BOOLEAN));
+        }
+        if ($request->filled('date_from')) {
+            $query->whereDate('tgl_input', '>=', $request->get('date_from'));
+        }
+        if ($request->filled('date_to')) {
+            $query->whereDate('tgl_input', '<=', $request->get('date_to'));
+        }
+
+        if ($type === 'anomali') {
+            $query->join('anomali_log', function($join) {
+                $join->on('anomali_log.tiang_id', '=', 'tiang_telekomunikasi.id')
+                     ->where('anomali_log.status', '=', 'aktif');
+            });
+            
+            $data = $query->selectRaw('ROUND(tiang_telekomunikasi.latitude::numeric, 3) as latitude, ROUND(tiang_telekomunikasi.longitude::numeric, 3) as longitude, COUNT(anomali_log.id) as weight')
+                ->groupBy(DB::raw('ROUND(tiang_telekomunikasi.latitude::numeric, 3), ROUND(tiang_telekomunikasi.longitude::numeric, 3)'))
+                ->get()
+                ->map(fn($item) => [
+                    'latitude' => (float)$item->latitude,
+                    'longitude' => (float)$item->longitude,
+                    'weight' => (int)$item->weight,
+                ])
+                ->toArray();
+        } else {
+            $data = $query->selectRaw('ROUND(latitude::numeric, 3) as latitude, ROUND(longitude::numeric, 3) as longitude, COUNT(*) as weight')
+                ->groupBy(DB::raw('ROUND(latitude::numeric, 3), ROUND(longitude::numeric, 3)'))
+                ->get()
+                ->map(fn($item) => [
+                    'latitude' => (float)$item->latitude,
+                    'longitude' => (float)$item->longitude,
+                    'weight' => (int)$item->weight,
+                ])
+                ->toArray();
+        }
+
+        return $this->success($data, 'Data heatmap berhasil diambil');
+    }
 }

@@ -168,8 +168,21 @@
     <!-- Peta Leaflet -->
     <div class="col-lg-7">
         <div class="card h-100">
-            <div class="card-header py-3">
+            <div class="card-header py-3 d-flex justify-content-between align-items-center">
                 <h6 class="mb-0"><i class="bi bi-map me-2"></i>Peta Sebaran Tiang</h6>
+                <div class="d-flex align-items-center gap-2">
+                    <div class="btn-group btn-group-sm" role="group">
+                        <input type="radio" class="btn-check" name="map_mode" id="mode_cluster" value="cluster" checked autocomplete="off">
+                        <label class="btn btn-outline-primary" for="mode_cluster" style="font-size: 0.75rem; padding: 0.25rem 0.5rem;">Marker Cluster</label>
+
+                        <input type="radio" class="btn-check" name="map_mode" id="mode_heatmap" value="heatmap" autocomplete="off">
+                        <label class="btn btn-outline-primary" for="mode_heatmap" style="font-size: 0.75rem; padding: 0.25rem 0.5rem;">Heatmap</label>
+                    </div>
+                    <select id="heatmap_type" class="form-select form-select-sm d-none" style="width: auto; font-size: 0.75rem; padding: 0.25rem 1.5rem 0.25rem 0.5rem; height: 31px;">
+                        <option value="tiang">Heatmap: Tiang</option>
+                        <option value="anomali">Heatmap: Anomali</option>
+                    </select>
+                </div>
             </div>
             <div class="card-body p-2 position-relative">
                 <!-- Search on map -->
@@ -182,16 +195,75 @@
         </div>
     </div>
 </div>
+
+<!-- Table STO Anomali & Breakdown Charts -->
+<div class="row g-3 mt-1">
+    <!-- Tabel Persentase per STO -->
+    <div class="col-lg-6">
+        <div class="card h-100">
+            <div class="card-header py-3 d-flex justify-content-between align-items-center">
+                <h6 class="mb-0"><i class="bi bi-table me-2"></i>Persentase Anomali per STO</h6>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive" style="max-height: 380px; overflow-y: auto;">
+                    <table class="table table-hover align-middle mb-0" id="sto-anomali-table">
+                        <thead class="table-light position-sticky top-0" style="z-index: 1;">
+                            <tr>
+                                <th>STO</th>
+                                <th class="text-end">Total Tiang</th>
+                                <th class="text-end">Anomali</th>
+                                <th class="text-end">Persentase Anomali</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td colspan="4" class="text-center text-muted py-4">Memuat data...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Breakdown Verifikasi & Legalitas ISP -->
+    <div class="col-lg-3">
+        <div class="card h-100">
+            <div class="card-header py-3 flex-shrink-0">
+                <h6 class="mb-0"><i class="bi bi-shield-check me-2"></i>Breakdown Verifikasi</h6>
+            </div>
+            <div class="card-body d-flex align-items-center justify-content-center">
+                <canvas id="chartVerifikasi" height="200"></canvas>
+                <p class="text-center text-muted small d-none" id="chartVerifikasiEmpty">Belum ada data</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-3">
+        <div class="card h-100">
+            <div class="card-header py-3 flex-shrink-0">
+                <h6 class="mb-0"><i class="bi bi-file-earmark-check me-2"></i>Legalitas ISP</h6>
+            </div>
+            <div class="card-body d-flex align-items-center justify-content-center">
+                <canvas id="chartLegalitas" height="200"></canvas>
+                <p class="text-center text-muted small d-none" id="chartLegalitasEmpty">Belum ada data</p>
+            </div>
+        </div>
+    </div>
+</div>
 @endsection
 
 @push('scripts')
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/leaflet.heat@0.2.0/dist/leaflet-heat.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <script>
 // ── STATE ──────────────────────────────────────────────────────
 let currentFilter = @json($filter ?? []);
-let chartSto, chartKondisi, chartOperator;
+let chartSto, chartKondisi, chartOperator, chartVerifikasi, chartLegalitas;
+let heatLayer = null;
+let currentMapMode = 'cluster'; // 'cluster' or 'heatmap'
 
 // ── PETA ──────────────────────────────────────────────────────
 const map = L.map('dashboard-map').setView([-5.35, 105.25], 10);
@@ -213,6 +285,53 @@ legend.addTo(map);
 
 const markerCluster = L.markerClusterGroup({ chunkedLoading: true });
 map.addLayer(markerCluster);
+
+// Toggle Layer Peta
+document.querySelectorAll('input[name="map_mode"]').forEach(radio => {
+    radio.addEventListener('change', function() {
+        currentMapMode = this.value;
+        const typeSelect = document.getElementById('heatmap_type');
+        if (currentMapMode === 'heatmap') {
+            typeSelect.classList.remove('d-none');
+            map.removeLayer(markerCluster);
+            loadHeatmap();
+        } else {
+            typeSelect.classList.add('d-none');
+            if (heatLayer) {
+                map.removeLayer(heatLayer);
+                heatLayer = null;
+            }
+            map.addLayer(markerCluster);
+        }
+    });
+});
+
+document.getElementById('heatmap_type').addEventListener('change', function() {
+    if (currentMapMode === 'heatmap') {
+        loadHeatmap();
+    }
+});
+
+async function loadHeatmap() {
+    const type = document.getElementById('heatmap_type').value;
+    const params = new URLSearchParams({ ...currentFilter, type: type });
+    const res = await fetch(`/api/tiang/heatmap?${params}`);
+    const json = await res.json();
+    
+    if (heatLayer) {
+        map.removeLayer(heatLayer);
+    }
+    
+    const points = Array.isArray(json.data) ? json.data : [];
+    const heatData = points.map(p => [p.latitude, p.longitude, p.weight]);
+    
+    heatLayer = L.heatLayer(heatData, {
+        radius: 25,
+        blur: 15,
+        maxZoom: 17,
+        max: type === 'anomali' ? 10 : 5
+    }).addTo(map);
+}
 
 function markerColor(d) {
     if (d.has_anomali) return '#dc3545';
@@ -280,33 +399,123 @@ function flyTo(lat, lng, id) {
 }
 
 // ── STATS ─────────────────────────────────────────────────────
+// ── STATS ─────────────────────────────────────────────────────
 async function loadStats() {
     const params = new URLSearchParams(currentFilter);
     const res = await fetch(`/api/dashboard/stats?${params}`);
     const json = await res.json();
     const s = json.data;
 
-    ['total_tiang','total_district','total_area','total_sto','tiang_kondisi_nok',
-     'anomali_aktif','tiang_pending_verifikasi','total_operator'].forEach(k => {
+    // Standard non-percentage stats
+    ['total_tiang','total_district','total_area','total_sto','total_operator'].forEach(k => {
         const el = document.getElementById(`stat-${k}`);
         if (el) el.textContent = (s[k] ?? 0).toLocaleString('id-ID');
     });
 
+    const fmtPct = (val) => String(val ?? 0).replace('.', ',');
+
+    // Percentage stats
+    const elNok = document.getElementById('stat-tiang_kondisi_nok');
+    if (elNok) {
+        const val = s.tiang_kondisi_nok ?? 0;
+        const pct = s.kondisi_nok_percent ?? 0;
+        elNok.textContent = `${val.toLocaleString('id-ID')} (${fmtPct(pct)}%)`;
+    }
+
+    const elAnomali = document.getElementById('stat-anomali_aktif');
+    if (elAnomali) {
+        const val = s.anomali_aktif ?? 0;
+        const pct = s.anomali_percent ?? 0;
+        elAnomali.textContent = `${val.toLocaleString('id-ID')} (${fmtPct(pct)}%)`;
+    }
+
+    const elPending = document.getElementById('stat-tiang_pending_verifikasi');
+    if (elPending) {
+        const val = s.tiang_pending_verifikasi ?? 0;
+        const pct = s.pending_percent ?? 0;
+        elPending.textContent = `${val.toLocaleString('id-ID')} (${fmtPct(pct)}%)`;
+    }
+
     document.getElementById('badge-anomali').textContent = s.anomali_aktif ?? 0;
 
-    // Chart STO
+    // Chart STO (Top 10 sorted by total tiang)
     const stoData = Array.isArray(s?.per_sto) ? s.per_sto : [];
-    updateChart(chartSto, stoData.map(x => x.sto_kode), stoData.map(x => x.total), 'chartStoEmpty');
+    const topStoData = [...stoData].slice(0, 10);
+    updateChart(chartSto, topStoData.map(x => x.sto_kode), topStoData.map(x => x.total), 'chartStoEmpty');
 
-    // Chart Kondisi
+    // Chart Kondisi (with percentage in labels)
     const kondisiData = Array.isArray(s?.per_kondisi) ? s.per_kondisi : [];
     const kondisiColors = { baik: '#198754', perlu_perhatian: '#ffc107', rusak: '#dc3545' };
-    updateDonut(chartKondisi, kondisiData.map(x => x.kondisi_nama), kondisiData.map(x => x.total),
-        kondisiData.map(x => kondisiColors[x.kondisi_level] || '#6c757d'), 'chartKondisiEmpty');
+    const kondisiLabels = kondisiData.map(x => {
+        const name = x.kondisi_nama || x.nama || 'N/A';
+        const val = (x.total ?? x.jumlah ?? 0).toLocaleString('id-ID');
+        const pct = fmtPct(x.percent);
+        return `${name}: ${val} (${pct}%)`;
+    });
+    updateDonut(chartKondisi, kondisiLabels, kondisiData.map(x => x.total ?? x.jumlah),
+        kondisiData.map(x => kondisiColors[x.kondisi_level || x.level] || '#6c757d'), 'chartKondisiEmpty');
 
     // Chart Operator
     const opData = Array.isArray(s?.per_operator_top5) ? s.per_operator_top5 : [];
     updateHBar(chartOperator, opData.map(x => x.nama_operator), opData.map(x => x.total), 'chartOperatorEmpty');
+
+    // Tabel Persentase per STO
+    const stoTableBody = document.querySelector('#sto-anomali-table tbody');
+    if (stoTableBody) {
+        if (stoData.length === 0) {
+            stoTableBody.innerHTML = '<tr><td colspan="4" class="text-center text-muted py-4">Tidak ada data STO</td></tr>';
+        } else {
+            // Sort by anomali_percent DESC
+            const sortedSto = [...stoData].sort((a, b) => (b.anomali_percent ?? 0) - (a.anomali_percent ?? 0));
+            stoTableBody.innerHTML = sortedSto.map(row => {
+                const isHighlight = (row.anomali_percent ?? 0) > 10;
+                const highlightStyle = isHighlight ? 'style="background-color: #fee2e2 !important;"' : '';
+                const valTotal = (row.total_tiang ?? row.total ?? 0).toLocaleString('id-ID');
+                const valAnomali = (row.anomali ?? 0).toLocaleString('id-ID');
+                const valPercent = fmtPct(row.anomali_percent);
+                return `
+                    <tr ${highlightStyle}>
+                        <td><b>${row.sto || row.sto_kode || 'N/A'}</b> <span class="text-muted small">${row.sto_nama || ''}</span></td>
+                        <td class="text-end">${valTotal}</td>
+                        <td class="text-end">${valAnomali}</td>
+                        <td class="text-end fw-semibold text-danger">${valPercent}%</td>
+                    </tr>
+                `;
+            }).join('');
+        }
+    }
+
+    // Chart Breakdown Verifikasi
+    const vBreakdown = s.verifikasi_breakdown || {};
+    const vLabels = [
+        `OK: ${(vBreakdown.ok?.jumlah ?? 0).toLocaleString('id-ID')} (${fmtPct(vBreakdown.ok?.percent)}%)`,
+        `Pending: ${(vBreakdown.pending?.jumlah ?? 0).toLocaleString('id-ID')} (${fmtPct(vBreakdown.pending?.percent)}%)`,
+        `Ditolak: ${(vBreakdown.ditolak?.jumlah ?? 0).toLocaleString('id-ID')} (${fmtPct(vBreakdown.ditolak?.percent)}%)`,
+        `Double: ${(vBreakdown.double_input?.jumlah ?? 0).toLocaleString('id-ID')} (${fmtPct(vBreakdown.double_input?.percent)}%)`
+    ];
+    const vData = [
+        vBreakdown.ok?.jumlah ?? 0,
+        vBreakdown.pending?.jumlah ?? 0,
+        vBreakdown.ditolak?.jumlah ?? 0,
+        vBreakdown.double_input?.jumlah ?? 0
+    ];
+    const vColors = ['#198754', '#ffc107', '#dc3545', '#6f42c1'];
+    updateDonut(chartVerifikasi, vLabels, vData, vColors, 'chartVerifikasiEmpty');
+
+    // Chart Legalitas ISP
+    const lBreakdown = s.legalitas_isp_breakdown || {};
+    const lLabels = [
+        `Legal: ${(lBreakdown.legal?.jumlah ?? 0).toLocaleString('id-ID')} (${fmtPct(lBreakdown.legal?.percent)}%)`,
+        `Perlu Verif: ${(lBreakdown.perlu_verifikasi?.jumlah ?? 0).toLocaleString('id-ID')} (${fmtPct(lBreakdown.perlu_verifikasi?.percent)}%)`,
+        `Ilegal: ${(lBreakdown.ilegal?.jumlah ?? 0).toLocaleString('id-ID')} (${fmtPct(lBreakdown.ilegal?.percent)}%)`
+    ];
+    const lData = [
+        lBreakdown.legal?.jumlah ?? 0,
+        lBreakdown.perlu_verifikasi?.jumlah ?? 0,
+        lBreakdown.ilegal?.jumlah ?? 0
+    ];
+    const lColors = ['#198754', '#ffc107', '#dc3545'];
+    updateDonut(chartLegalitas, lLabels, lData, lColors, 'chartLegalitasEmpty');
 }
 
 // ── ANOMALI LIST ───────────────────────────────────────────────
@@ -356,6 +565,18 @@ function initCharts() {
         type: 'bar',
         data: { labels: [], datasets: [{ data: [], backgroundColor: '#0d9488', borderRadius: 4, label: 'Tiang' }] },
         options: { indexAxis: 'y', responsive: true, plugins: { legend: { display: false } }, scales: { x: { beginAtZero: true, ticks: { precision: 0 } } } }
+    });
+
+    chartVerifikasi = new Chart(document.getElementById('chartVerifikasi'), {
+        type: 'doughnut',
+        data: { labels: [], datasets: [{ data: [], backgroundColor: [] }] },
+        options: { responsive: true, cutout: '65%', plugins: { legend: { position: 'bottom', labels: { boxWidth: 12, padding: 8 } } } }
+    });
+
+    chartLegalitas = new Chart(document.getElementById('chartLegalitas'), {
+        type: 'doughnut',
+        data: { labels: [], datasets: [{ data: [], backgroundColor: [] }] },
+        options: { responsive: true, cutout: '65%', plugins: { legend: { position: 'bottom', labels: { boxWidth: 12, padding: 8 } } } }
     });
 }
 

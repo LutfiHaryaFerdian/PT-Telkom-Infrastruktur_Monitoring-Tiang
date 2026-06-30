@@ -68,18 +68,34 @@ class DashboardApiController extends Controller
 
             $tiangPendingVerifikasi = (clone $baseQuery)->where('status_verifikasi', 'pending')->count();
 
+            $anomaliPerSto = AnomalyLog::whereIn('tiang_id', $tiangIds)
+                ->where('status', 'aktif')
+                ->join('tiang_telekomunikasi', 'tiang_telekomunikasi.id', '=', 'anomali_log.tiang_id')
+                ->selectRaw('tiang_telekomunikasi.sto_id, COUNT(*) as total')
+                ->groupBy('tiang_telekomunikasi.sto_id')
+                ->pluck('total', 'sto_id')
+                ->all();
+
             $perSto = (clone $baseQuery)
                 ->selectRaw('sto_id, COUNT(*) as total')
                 ->with('sto:id,kode,nama')
                 ->groupBy('sto_id')
                 ->orderByDesc('total')
-                ->limit(10)
                 ->get()
-                ->map(fn ($item) => [
-                    'sto_kode' => $item->sto?->kode,
-                    'sto_nama' => $item->sto?->nama,
-                    'total'    => (int)$item->total,
-                ])
+                ->map(function ($item) use ($anomaliPerSto) {
+                    $anomaliCount = $anomaliPerSto[$item->sto_id] ?? 0;
+                    $totalTiangSto = (int)$item->total;
+                    $anomaliPercent = $totalTiangSto > 0 ? round(($anomaliCount / $totalTiangSto) * 100, 2) : 0.0;
+                    return [
+                        'sto_kode'        => $item->sto?->kode,
+                        'sto_nama'        => $item->sto?->nama,
+                        'total'           => $totalTiangSto,
+                        'sto'             => $item->sto?->kode,
+                        'total_tiang'     => $totalTiangSto,
+                        'anomali'         => $anomaliCount,
+                        'anomali_percent' => $anomaliPercent,
+                    ];
+                })
                 ->toArray();
 
             $perKondisi = (clone $baseQuery)
@@ -91,6 +107,9 @@ class DashboardApiController extends Controller
                     'kondisi_nama'  => $item->kondisiTiang?->nama,
                     'kondisi_level' => $item->kondisiTiang?->level,
                     'total'         => (int)$item->total,
+                    'nama'          => $item->kondisiTiang?->nama,
+                    'jumlah'        => (int)$item->total,
+                    'percent'       => $totalTiang > 0 ? round(((int)$item->total / $totalTiang) * 100, 2) : 0.0,
                 ])
                 ->toArray();
 
@@ -116,6 +135,60 @@ class DashboardApiController extends Controller
             $totalSto      = Sto::whereNull('deleted_at')->count();
             $totalOperator = OperatorIsp::whereNull('deleted_at')->count();
 
+            // Breakdown Verifikasi
+            $verifikasiCounts = (clone $baseQuery)
+                ->selectRaw('status_verifikasi, COUNT(*) as total')
+                ->groupBy('status_verifikasi')
+                ->pluck('total', 'status_verifikasi')
+                ->all();
+
+            $verifikasiBreakdown = [
+                'ok' => [
+                    'jumlah' => $verifikasiCounts['ok'] ?? 0,
+                    'percent' => $totalTiang > 0 ? round((($verifikasiCounts['ok'] ?? 0) / $totalTiang) * 100, 2) : 0.0,
+                ],
+                'pending' => [
+                    'jumlah' => $verifikasiCounts['pending'] ?? 0,
+                    'percent' => $totalTiang > 0 ? round((($verifikasiCounts['pending'] ?? 0) / $totalTiang) * 100, 2) : 0.0,
+                ],
+                'ditolak' => [
+                    'jumlah' => $verifikasiCounts['ditolak'] ?? 0,
+                    'percent' => $totalTiang > 0 ? round((($verifikasiCounts['ditolak'] ?? 0) / $totalTiang) * 100, 2) : 0.0,
+                ],
+                'double_input' => [
+                    'jumlah' => $verifikasiCounts['double_input'] ?? 0,
+                    'percent' => $totalTiang > 0 ? round((($verifikasiCounts['double_input'] ?? 0) / $totalTiang) * 100, 2) : 0.0,
+                ],
+            ];
+
+            // Breakdown Legalitas ISP
+            $tiangOperatorBase = DB::table('tiang_operator')
+                ->join('tiang_telekomunikasi', 'tiang_telekomunikasi.id', '=', 'tiang_operator.tiang_id')
+                ->whereNull('tiang_telekomunikasi.deleted_at')
+                ->when($tiangIds->isNotEmpty(), fn($q) => $q->whereIn('tiang_operator.tiang_id', $tiangIds));
+
+            $totalTiangOperators = (clone $tiangOperatorBase)->count();
+            $legalitasCounts = (clone $tiangOperatorBase)
+                ->selectRaw('status_legalitas, COUNT(*) as total')
+                ->groupBy('status_legalitas')
+                ->pluck('total', 'status_legalitas')
+                ->all();
+
+            $legalitasBreakdown = [
+                'legal' => [
+                    'jumlah' => $legalitasCounts['legal'] ?? 0,
+                    'percent' => $totalTiangOperators > 0 ? round((($legalitasCounts['legal'] ?? 0) / $totalTiangOperators) * 100, 2) : 0.0,
+                ],
+                'perlu_verifikasi' => [
+                    'jumlah' => $legalitasCounts['perlu_verifikasi'] ?? 0,
+                    'percent' => $totalTiangOperators > 0 ? round((($legalitasCounts['perlu_verifikasi'] ?? 0) / $totalTiangOperators) * 100, 2) : 0.0,
+                ],
+                'ilegal' => [
+                    'jumlah' => $legalitasCounts['ilegal'] ?? 0,
+                    'percent' => $totalTiangOperators > 0 ? round((($legalitasCounts['ilegal'] ?? 0) / $totalTiangOperators) * 100, 2) : 0.0,
+                ],
+            ];
+
             return [
                 'total_district'           => $totalDistrict,
                 'total_area'               => $totalArea,
@@ -129,6 +202,14 @@ class DashboardApiController extends Controller
                 'per_sto'                  => $perSto,
                 'per_kondisi'              => $perKondisi,
                 'per_operator_top5'        => $perOperatorTop5,
+                // New additions:
+                'kondisi_nok'              => $tiangKondisiNok,
+                'kondisi_nok_percent'      => $totalTiang > 0 ? round(($tiangKondisiNok / $totalTiang) * 100, 2) : 0.0,
+                'anomali_percent'          => $totalTiang > 0 ? round(($anomaliAktif / $totalTiang) * 100, 2) : 0.0,
+                'pending_verifikasi'       => $tiangPendingVerifikasi,
+                'pending_percent'          => $totalTiang > 0 ? round(($tiangPendingVerifikasi / $totalTiang) * 100, 2) : 0.0,
+                'verifikasi_breakdown'     => $verifikasiBreakdown,
+                'legalitas_isp_breakdown'  => $legalitasBreakdown,
             ];
         });
 
