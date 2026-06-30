@@ -113,7 +113,7 @@ Sistem memiliki mesin pemeriksa otomatis untuk menjaga kebersihan data aset tian
     2.  **Tanpa Foto:** Tiang aktif yang tidak memiliki data dokumentasi foto fisik.
     3.  **Kelebihan Kapasitas ISP:** Jumlah operator penumpang melebihi kapasitas standar tiang.
 *   **Alur Eksekusi:**
-    Setiap kali tiang dibuat atau diperbarui, `RunAnomalyDetectionJob` akan berjalan di background queue untuk memeriksa kondisi tiang tersebut. Jika ditemukan pelanggaran aturan, catatan pelanggaran akan masuk ke dalam tabel `anomaly_logs` untuk ditampilkan pada dashboard utama.
+    Setiap kali tiang dibuat atau diperbarui, `RunAnomalyDetectionJob` akan berjalan secara sinkronus (realtime/sync) untuk memeriksa kondisi tiang tersebut. Jika ditemukan pelanggaran aturan, catatan pelanggaran akan masuk ke dalam tabel `anomaly_logs` untuk ditampilkan pada dashboard utama.
 
 ---
 
