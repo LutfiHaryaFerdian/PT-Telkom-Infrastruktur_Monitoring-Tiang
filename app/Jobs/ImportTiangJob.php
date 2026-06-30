@@ -214,6 +214,23 @@ class ImportTiangJob implements ShouldQueue
             throw new \InvalidArgumentException("Longitude {$lng} di luar rentang wilayah Lampung (104.0 s/d 107.0).");
         }
 
+        $jenisTiangNama   = $get('Jenis Tiang');
+        $kondisiNama      = $get('Kondisi Tiang');
+        $tglInputRaw      = $get('Tgl Input');
+        
+        $statusVerifikasiRaw = strtolower($get('Verifikasi AOM') ?: $get('Status Verifikasi'));
+        $statusVerifikasi = 'pending';
+        if (in_array($statusVerifikasiRaw, ['ok', 'verified', 'verif', 'sudah verifikasi'])) {
+            $statusVerifikasi = 'ok';
+        } elseif (in_array($statusVerifikasiRaw, ['ditolak', 'rejected'])) {
+            $statusVerifikasi = 'ditolak';
+        }
+
+        $makeInt = function($val) {
+            $val = preg_replace('/[^0-9]/', '', $val);
+            return $val === '' ? 0 : (int)$val;
+        };
+
         // === WRAP INDIVIDUAL ROW IN A DATABASE TRANSACTION ===
         return DB::transaction(function () use ($stoKode, $createMaster, $get, $jenisTiangNama, $kondisiNama, $makeInt, $tglInputRaw, $statusVerifikasi, $lat, $lng, $namaJalan, $history) {
             // === STO ===
