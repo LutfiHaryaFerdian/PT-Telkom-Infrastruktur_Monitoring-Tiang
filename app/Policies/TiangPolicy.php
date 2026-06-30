@@ -29,12 +29,11 @@ class TiangPolicy
     }
 
     /**
-     * update: teknisi hanya bisa edit tiang yang dia buat sendiri.
-     * Admin sudah dihandle di before().
+     * update: admin & teknisi bisa edit data tiang.
      */
     public function update(User $user, TiangTelekomunikasi $tiang): bool
     {
-        return $tiang->created_by === $user->id;
+        return in_array($user->role, ['admin', 'teknisi']);
     }
 
     /**

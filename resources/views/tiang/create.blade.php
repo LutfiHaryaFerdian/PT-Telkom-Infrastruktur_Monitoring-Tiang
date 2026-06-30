@@ -166,26 +166,45 @@
 <!-- Template ISP row -->
 <template id="op-template">
     <div class="op-row border-bottom p-3">
-        <div class="d-flex justify-content-between mb-2">
+        <div class="d-flex justify-content-between align-items-center mb-2">
+            <span class="fw-semibold text-primary" style="font-size: .85rem;"><i class="bi bi-wifi me-1"></i>Detail ISP</span>
+            <button type="button" class="btn btn-sm btn-outline-danger btn-remove-op"><i class="bi bi-trash"></i></button>
+        </div>
+        <div class="mb-2">
+            <label class="form-label text-muted small mb-1">Operator</label>
             <select name="operators[__IDX__][operator_id]" class="form-select form-select-sm" required>
                 <option value="">— Pilih Operator —</option>
                 @foreach($operators as $op)
                 <option value="{{ $op->id }}">{{ $op->nama_operator }}</option>
                 @endforeach
             </select>
-            <button type="button" class="btn btn-sm btn-outline-danger ms-2 btn-remove-op"><i class="bi bi-trash"></i></button>
         </div>
-        <div class="row g-1 mb-2">
-            <div class="col-4"><input type="number" name="operators[__IDX__][jml_kabel_dc]" class="form-control form-control-sm" min="0" value="0" placeholder="Kabel DC"></div>
-            <div class="col-4"><input type="number" name="operators[__IDX__][jml_ku]" class="form-control form-control-sm" min="0" value="0" placeholder="KU"></div>
-            <div class="col-4"><input type="number" name="operators[__IDX__][jml_odp]" class="form-control form-control-sm" min="0" value="0" placeholder="ODP"></div>
+        <div class="row g-2 mb-2">
+            <div class="col-4">
+                <label class="form-label text-muted small mb-1" style="font-size:11px">Kabel DC</label>
+                <input type="number" name="operators[__IDX__][jml_kabel_dc]" class="form-control form-control-sm" min="0" value="0">
+            </div>
+            <div class="col-4">
+                <label class="form-label text-muted small mb-1" style="font-size:11px">Kabel KU</label>
+                <input type="number" name="operators[__IDX__][jml_ku]" class="form-control form-control-sm" min="0" value="0">
+            </div>
+            <div class="col-4">
+                <label class="form-label text-muted small mb-1" style="font-size:11px">ODP</label>
+                <input type="number" name="operators[__IDX__][jml_odp]" class="form-control form-control-sm" min="0" value="0">
+            </div>
         </div>
-        <select name="operators[__IDX__][status_legalitas]" class="form-select form-select-sm mb-2">
-            <option value="perlu_verifikasi">Perlu Verifikasi</option>
-            <option value="legal">Legal</option>
-            <option value="ilegal">Ilegal</option>
-        </select>
-        <textarea name="operators[__IDX__][keterangan]" class="form-control form-control-sm" rows="1" placeholder="Keterangan..."></textarea>
+        <div class="mb-2">
+            <label class="form-label text-muted small mb-1">Status Legalitas</label>
+            <select name="operators[__IDX__][status_legalitas]" class="form-select form-select-sm">
+                <option value="perlu_verifikasi">Perlu Verifikasi</option>
+                <option value="legal">Legal</option>
+                <option value="ilegal">Ilegal</option>
+            </select>
+        </div>
+        <div>
+            <label class="form-label text-muted small mb-1">Keterangan</label>
+            <textarea name="operators[__IDX__][keterangan]" class="form-control form-control-sm" rows="1" placeholder="Keterangan..."></textarea>
+        </div>
     </div>
 </template>
 @endsection
