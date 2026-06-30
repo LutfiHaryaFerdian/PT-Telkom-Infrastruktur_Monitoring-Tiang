@@ -37,7 +37,7 @@ class MasterDataController extends Controller
 
     public function index(): View
     {
-        $districts = District::withCount('areas')->orderBy('name')->get();
+        $districts = District::withCount(['areas', 'stos'])->orderBy('name')->get();
         return view('master.districts', compact('districts'));
     }
 
@@ -78,7 +78,7 @@ class MasterDataController extends Controller
 
     public function areasIndex(): View
     {
-        $areas = Area::with('district')->orderBy('name')->get();
+        $areas = Area::with('district')->withCount('stos')->orderBy('name')->get();
         $districts = District::orderBy('name')->get();
         return view('master.areas', compact('areas', 'districts'));
     }

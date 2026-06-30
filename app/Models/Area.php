@@ -19,4 +19,11 @@ class Area extends Model
     {
         return $this->hasMany(Sto::class);
     }
+
+    public function getTiangCountAttribute(): int
+    {
+        return \App\Models\TiangTelekomunikasi::whereHas('sto', function ($q) {
+            $q->where('area_id', $this->id);
+        })->count();
+    }
 }
