@@ -3,6 +3,8 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Resources\TiangMapResource;
+use App\Http\Resources\TiangResource;
 use App\Models\ActivityLog;
 use App\Models\AnomalyLog;
 use App\Models\FotoTiang;
@@ -86,7 +88,7 @@ class TiangApiController extends Controller
         return $this->success([
             'page'     => $page,
             'per_page' => $perPage,
-            'data'     => $data,
+            'data'     => TiangMapResource::collection($data),
         ]);
     }
 
@@ -150,7 +152,8 @@ class TiangApiController extends Controller
             'activeAnomalyLogs',
         ])->findOrFail($id);
 
-        return $this->success($tiang);
+        // [API Resource] Format response konsisten via TiangResource
+        return $this->success(new TiangResource($tiang));
     }
 
     /**
@@ -281,19 +284,32 @@ class TiangApiController extends Controller
     /**
      * POST /api/tiang/{id}/foto
      * Upload foto tiang (depan/kanan/kiri).
+     * [KEAMANAN] Validasi MIME asli via finfo, nama file disimpan sebagai UUID (bukan nama user).
      */
     public function uploadFoto(Request $request, int $id): JsonResponse
     {
         $request->validate([
             'jenis_foto' => ['required', 'in:depan,kanan,kiri'],
-            'foto'       => ['required', 'file', 'mimes:jpg,jpeg,png', 'max:5120'],
+            'foto'       => ['required', 'file', 'max:5120'], // maks 5MB
         ]);
 
         $tiang = TiangTelekomunikasi::whereNull('deleted_at')->findOrFail($id);
         $jenis = $request->input('jenis_foto');
         $file  = $request->file('foto');
 
-        DB::transaction(function () use ($tiang, $jenis, $file, $id) {
+        // [KEAMANAN] Validasi MIME asli via finfo — bukan hanya ekstensi nama file
+        $realMime = (new \finfo(FILEINFO_MIME_TYPE))->file($file->getRealPath());
+        $allowedMimes = ['image/jpeg', 'image/png', 'image/webp'];
+        if (!in_array($realMime, $allowedMimes)) {
+            return $this->error('Tipe file tidak diizinkan. Hanya JPEG, PNG, atau WebP yang diterima.', 422);
+        }
+
+        // [KEAMANAN] Nama file fisik di storage SELALU UUID — bukan nama asli dari user
+        $ext          = $file->getClientOriginalExtension() ?: pathinfo($file->getClientOriginalName(), PATHINFO_EXTENSION);
+        $uuidFilename = Str::uuid() . '.' . strtolower($ext);
+        $storagePath  = "foto_tiang/{$id}/{$uuidFilename}";
+
+        DB::transaction(function () use ($tiang, $jenis, $file, $id, $storagePath, $uuidFilename, $realMime) {
             // Hapus foto lama jika ada
             $existing = FotoTiang::where('tiang_id', $id)->where('jenis_foto', $jenis)->first();
             if ($existing) {
@@ -301,16 +317,15 @@ class TiangApiController extends Controller
                 $existing->delete();
             }
 
-            $ext      = $file->getClientOriginalExtension();
-            $path     = "foto_tiang/{$id}/{$jenis}.{$ext}";
-            $file->storeAs("foto_tiang/{$id}", "{$jenis}.{$ext}", 'public');
+            // Simpan file dengan nama UUID
+            $file->storeAs("foto_tiang/{$id}", $uuidFilename, 'public');
 
             FotoTiang::create([
                 'tiang_id'          => $id,
                 'jenis_foto'        => $jenis,
-                'path_file'         => $path,
-                'original_filename' => $file->getClientOriginalName(),
-                'mime_type'         => $file->getMimeType(),
+                'path_file'         => $storagePath,
+                'original_filename' => $file->getClientOriginalName(), // nama asli disimpan di DB saja
+                'mime_type'         => $realMime,
                 'uploaded_by'       => auth()->id(),
             ]);
         });

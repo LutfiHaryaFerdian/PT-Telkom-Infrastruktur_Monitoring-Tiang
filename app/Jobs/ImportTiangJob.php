@@ -214,79 +214,70 @@ class ImportTiangJob implements ShouldQueue
             throw new \InvalidArgumentException("Longitude {$lng} di luar rentang wilayah Lampung (104.0 s/d 107.0).");
         }
 
-        // === STO ===
-        $sto = Sto::whereNull('deleted_at')->where('kode', $stoKode)->first();
+        // === WRAP INDIVIDUAL ROW IN A DATABASE TRANSACTION ===
+        return DB::transaction(function () use ($stoKode, $createMaster, $get, $jenisTiangNama, $kondisiNama, $makeInt, $tglInputRaw, $statusVerifikasi, $lat, $lng, $namaJalan, $history) {
+            // === STO ===
+            $sto = Sto::whereNull('deleted_at')->where('kode', $stoKode)->first();
 
-        if (! $sto) {
-            if (! $createMaster) {
-                throw new \InvalidArgumentException("STO '{$stoKode}' tidak ditemukan. Gunakan opsi '--create-master' untuk membuat otomatis.");
-            }
-
-            // Buat District → Area → STO jika belum ada
-            $districtName = $get('District') ?: 'Lampung';
-            $areaName     = $get('Area') ?: 'Lampung';
-
-            $district = District::firstOrCreate(['name' => $districtName], ['name' => $districtName]);
-            $area     = Area::firstOrCreate(
-                ['district_id' => $district->id, 'name' => $areaName],
-                ['district_id' => $district->id, 'name' => $areaName]
-            );
-            $sto = Sto::create(['area_id' => $area->id, 'kode' => $stoKode]);
-        }
-
-        // === JENIS TIANG ===
-        $jenisTiangNama = $get('Jenis Tiang') ?: 'T-7-2 Seqment';
-        $jenisTiang = JenisTiang::where('nama', $jenisTiangNama)->first()
-            ?? JenisTiang::first(); // fallback ke pertama
-
-        // === KONDISI TIANG ===
-        $kondisiNama = $get('Kondisi Tiang') ?: 'Baik. Cat OK';
-        $kondisiTiang = KondisiTiang::where('nama', $kondisiNama)->first()
-            ?? KondisiTiang::first(); // fallback ke pertama
-
-        // === JUMLAH NUMERIK ===
-        $makeInt = fn($v) => max(0, (int)str_replace([',', '.'], '', $v));
-
-        $jmlSekitar  = $makeInt($get('Jml Tiang Sekitar'));
-        $jmlKabelDc  = $makeInt($get('Jml Kabel DC Telkom'));
-        $jmlKuTelkom = $makeInt($get('Jml KU Telkom'));
-
-        // === TANGGAL INPUT ===
-        $tglInputRaw = $get('Tgl Input');
-        $tglInput = null;
-        if (! empty($tglInputRaw)) {
-            // Handle Excel date serial (float)
-            if (is_numeric($tglInputRaw)) {
-                $timestamp = ((float)$tglInputRaw - 25569) * 86400;
-                $tglInput = date('Y-m-d', $timestamp);
-            } else {
-                try {
-                    $tglInput = \Carbon\Carbon::parse($tglInputRaw)->format('Y-m-d');
-                } catch (\Exception $e) {
-                    $tglInput = now()->format('Y-m-d');
+            if (! $sto) {
+                if (! $createMaster) {
+                    throw new \InvalidArgumentException("STO '{$stoKode}' tidak ditemukan. Gunakan opsi '--create-master' untuk membuat otomatis.");
                 }
+
+                // Buat District → Area → STO jika belum ada
+                $districtName = $get('District') ?: 'Lampung';
+                $areaName     = $get('Area') ?: 'Lampung';
+
+                $district = District::firstOrCreate(['name' => $districtName], ['name' => $districtName]);
+                $area     = Area::firstOrCreate(
+                    ['district_id' => $district->id, 'name' => $areaName],
+                    ['district_id' => $district->id, 'name' => $areaName]
+                );
+                $sto = Sto::create(['area_id' => $area->id, 'kode' => $stoKode]);
             }
-        } else {
-            $tglInput = now()->format('Y-m-d');
-        }
-
-        // === STATUS VERIFIKASI ===
-        $verifikasiAom = strtolower($get('Verifikasi AOM'));
-        $statusVerifikasi = str_contains($verifikasiAom, 'ok') ? 'ok' : 'pending';
-
-        // === GENERATE KODE TIANG ===
-        $tiang = DB::transaction(function () use ($sto, $lat, $lng, $namaJalan, $jenisTiang, $kondisiTiang,
-            $jmlSekitar, $jmlKabelDc, $jmlKuTelkom, $tglInput, $statusVerifikasi, $get, $history) {
 
             // Lock parent Sto row to prevent race conditions on code generation
             Sto::where('id', $sto->id)->lockForUpdate()->first();
+
+            // === JENIS TIANG ===
+            $jenisTiang = JenisTiang::where('nama', $jenisTiangNama)->first()
+                ?? JenisTiang::first(); // fallback ke pertama
+
+            // === KONDISI TIANG ===
+            $kondisiTiang = KondisiTiang::where('nama', $kondisiNama)->first()
+                ?? KondisiTiang::first(); // fallback ke pertama
+
+            // === JUMLAH NUMERIK ===
+            $jmlSekitar  = $makeInt($get('Jml Tiang Sekitar'));
+            $jmlKabelDc  = $makeInt($get('Jml Kabel DC Telkom'));
+            $jmlKuTelkom = $makeInt($get('Jml KU Telkom'));
+
+            // === TANGGAL INPUT ===
+            $tglInput = null;
+            if (! empty($tglInputRaw)) {
+                // Handle Excel date serial (float)
+                if (is_numeric($tglInputRaw)) {
+                    $timestamp = ((float)$tglInputRaw - 25569) * 86400;
+                    $tglInput = date('Y-m-d', $timestamp);
+                } else {
+                    try {
+                        $tglInput = \Carbon\Carbon::parse($tglInputRaw)->format('Y-m-d');
+                    } catch (\Exception $e) {
+                        $tglInput = now()->format('Y-m-d');
+                    }
+                }
+            } else {
+                $tglInput = now()->format('Y-m-d');
+            }
+
+            // === GENERATE KODE TIANG ===
             $last = TiangTelekomunikasi::where('sto_id', $sto->id)->max('kode_tiang');
             $lastNum = $last ? (int)substr($last, -5) : 0;
             $kode = "TI-{$sto->kode}-" . str_pad($lastNum + 1, 5, '0', STR_PAD_LEFT);
 
             $idInstansi = $get('ID Tiang Instansi') ?: null;
 
-            return TiangTelekomunikasi::create([
+            $tiang = TiangTelekomunikasi::create([
                 'kode_tiang'                => $kode,
                 'id_tiang_instansi'         => $idInstansi,
                 'sto_id'                    => $sto->id,
@@ -304,44 +295,45 @@ class ImportTiangJob implements ShouldQueue
                 'status_verifikasi'         => $statusVerifikasi,
                 'created_by'                => $history->uploaded_by,
             ]);
-        });
 
-        // === OPERATOR ISP ===
-        $namaOperatorRaw  = $get('Nama Operator Lain');
-        $jmlKabelDcOp     = max(0, (int)$get('Jml Kabel DC Operator Lain'));
-        $jmlKuOp          = max(0, (int)$get('Jml KU Operator Lain'));
-        $jmlOdpOp         = max(0, (int)$get('Jml ODP Operator Lain'));
-        $keteranganOp     = $get('Keterangan Operator') ?: null;
+            // === OPERATOR ISP ===
+            $namaOperatorRaw  = $get('Nama Operator Lain');
+            $jmlKabelDcOp     = max(0, (int)$get('Jml Kabel DC Operator Lain'));
+            $jmlKuOp          = max(0, (int)$get('Jml KU Operator Lain'));
+            $jmlOdpOp         = max(0, (int)$get('Jml ODP Operator Lain'));
+            $keteranganOp     = $get('Keterangan Operator') ?: null;
 
-        if (! empty($namaOperatorRaw)) {
-            $operatorNames = array_unique(array_filter(array_map('trim', explode(',', $namaOperatorRaw))));
+            if (! empty($namaOperatorRaw)) {
+                $operatorNames = array_unique(array_filter(array_map('trim', explode(',', $namaOperatorRaw))));
 
-            foreach ($operatorNames as $nama) {
-                if (empty($nama)) continue;
+                foreach ($operatorNames as $nama) {
+                    if (empty($nama)) continue;
 
-                $operator = OperatorIsp::withTrashed()
-                    ->where('nama_operator', $nama)
-                    ->first();
+                    $operator = OperatorIsp::withTrashed()
+                        ->where('nama_operator', $nama)
+                        ->first();
 
-                if (! $operator) {
-                    $operator = OperatorIsp::create(['nama_operator' => $nama, 'is_predefined' => false]);
-                } elseif ($operator->trashed()) {
-                    $operator->restore();
+                    if (! $operator) {
+                        $operator = OperatorIsp::create(['nama_operator' => $nama, 'is_predefined' => false]);
+                    } elseif ($operator->trashed()) {
+                        $operator->restore();
+                    }
+
+                    TiangOperator::firstOrCreate(
+                        ['tiang_id' => $tiang->id, 'operator_id' => $operator->id],
+                        [
+                            'jml_kabel_dc'        => $jmlKabelDcOp,
+                            'jml_ku'              => $jmlKuOp,
+                            'jml_odp'             => $jmlOdpOp,
+                            'keterangan_operator' => $keteranganOp,
+                            'status_legalitas'    => 'perlu_verifikasi',
+                        ]
+                    );
                 }
-
-                TiangOperator::firstOrCreate(
-                    ['tiang_id' => $tiang->id, 'operator_id' => $operator->id],
-                    [
-                        'jml_kabel_dc'        => $jmlKabelDcOp,
-                        'jml_ku'              => $jmlKuOp,
-                        'jml_odp'             => $jmlOdpOp,
-                        'keterangan_operator' => $keteranganOp,
-                        'status_legalitas'    => 'perlu_verifikasi',
-                    ]
-                );
             }
-        }
-        return true;
+
+            return true;
+        }, 3);
     }
 
     /**

@@ -13,6 +13,7 @@ use App\Models\Sto;
 use App\Models\TiangTelekomunikasi;
 use App\Models\TiangOperator;
 use App\Services\AnomalyDetectionService;
+use App\Services\TiangService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -21,7 +22,10 @@ use Illuminate\View\View;
 
 class TiangController extends Controller
 {
-    public function __construct(protected AnomalyDetectionService $anomalyService) {}
+    public function __construct(
+        protected AnomalyDetectionService $anomalyService,
+        protected TiangService $tiangService
+    ) {}
 
     // ============================================================
     // INDEX — AJAX server-side DataTables-compatible
@@ -123,44 +127,7 @@ class TiangController extends Controller
     {
         $this->authorize('create', TiangTelekomunikasi::class);
 
-        $tiang = DB::transaction(function () use ($request) {
-            $sto = Sto::findOrFail($request->sto_id);
-
-            // Generate kode_tiang dalam transaction dengan locking
-            // Lock parent Sto row to prevent race conditions on code generation
-            Sto::where('id', $sto->id)->lockForUpdate()->first();
-            $last = TiangTelekomunikasi::where('sto_id', $sto->id)->max('kode_tiang');
-
-            $lastNum = $last ? (int)substr($last, -5) : 0;
-            $next    = str_pad($lastNum + 1, 5, '0', STR_PAD_LEFT);
-            $kode    = "TI-{$sto->kode}-{$next}";
-
-            $tiang = TiangTelekomunikasi::create(array_merge(
-                $request->validated(),
-                [
-                    'kode_tiang'  => $kode,
-                    'created_by'  => auth()->id(),
-                    'status_verifikasi' => 'pending',
-                ]
-            ));
-
-            // Simpan operator ISP jika ada
-            if ($request->filled('operators')) {
-                foreach ($request->operators as $op) {
-                    TiangOperator::create([
-                        'tiang_id'            => $tiang->id,
-                        'operator_id'         => $op['operator_id'],
-                        'jml_kabel_dc'        => $op['jml_kabel_dc'] ?? 0,
-                        'jml_ku'              => $op['jml_ku'] ?? 0,
-                        'jml_odp'             => $op['jml_odp'] ?? 0,
-                        'keterangan_operator' => $op['keterangan'] ?? null,
-                        'status_legalitas'    => $op['status_legalitas'] ?? 'perlu_verifikasi',
-                    ]);
-                }
-            }
-
-            return $tiang;
-        });
+        $tiang = $this->tiangService->createWithRelations($request->validated());
 
         // Catat activity log
         $user = auth()->user();
@@ -231,29 +198,7 @@ class TiangController extends Controller
 
         $old = $tiang->toArray();
 
-        DB::transaction(function () use ($request, $tiang) {
-            $tiang->update(array_merge(
-                $request->validated(),
-                ['updated_by' => auth()->id()]
-            ));
-
-            // Sync operator ISP
-            if ($request->has('operators')) {
-                // Hapus semua operator lama, lalu insert ulang
-                $tiang->tiangOperator()->delete();
-                foreach ($request->operators as $op) {
-                    TiangOperator::create([
-                        'tiang_id'            => $tiang->id,
-                        'operator_id'         => $op['operator_id'],
-                        'jml_kabel_dc'        => $op['jml_kabel_dc'] ?? 0,
-                        'jml_ku'              => $op['jml_ku'] ?? 0,
-                        'jml_odp'             => $op['jml_odp'] ?? 0,
-                        'keterangan_operator' => $op['keterangan'] ?? null,
-                        'status_legalitas'    => $op['status_legalitas'] ?? 'perlu_verifikasi',
-                    ]);
-                }
-            }
-        });
+        $tiang = $this->tiangService->updateWithRelations($tiang, $request->validated());
 
         $user = auth()->user();
         ActivityLog::record(

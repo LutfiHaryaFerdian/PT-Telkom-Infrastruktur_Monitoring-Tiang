@@ -295,17 +295,17 @@ async function loadStats() {
     document.getElementById('badge-anomali').textContent = s.anomali_aktif ?? 0;
 
     // Chart STO
-    const stoData = s.per_sto || [];
+    const stoData = Array.isArray(s?.per_sto) ? s.per_sto : [];
     updateChart(chartSto, stoData.map(x => x.sto_kode), stoData.map(x => x.total), 'chartStoEmpty');
 
     // Chart Kondisi
-    const kondisiData = s.per_kondisi || [];
+    const kondisiData = Array.isArray(s?.per_kondisi) ? s.per_kondisi : [];
     const kondisiColors = { baik: '#198754', perlu_perhatian: '#ffc107', rusak: '#dc3545' };
     updateDonut(chartKondisi, kondisiData.map(x => x.kondisi_nama), kondisiData.map(x => x.total),
         kondisiData.map(x => kondisiColors[x.kondisi_level] || '#6c757d'), 'chartKondisiEmpty');
 
     // Chart Operator
-    const opData = s.per_operator_top5 || [];
+    const opData = Array.isArray(s?.per_operator_top5) ? s.per_operator_top5 : [];
     updateHBar(chartOperator, opData.map(x => x.nama_operator), opData.map(x => x.total), 'chartOperatorEmpty');
 }
 

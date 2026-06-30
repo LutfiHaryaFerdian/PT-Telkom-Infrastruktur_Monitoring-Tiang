@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Resources\AnomalyLogResource;
 use App\Models\AnomalyLog;
 use App\Models\ActivityLog;
 use Illuminate\Http\JsonResponse;
@@ -24,17 +25,9 @@ class AnomalyApiController extends Controller
         $data = AnomalyLog::with(['tiang:id,kode_tiang'])
             ->where('status', 'aktif')
             ->orderByDesc('detected_at')
-            ->get()
-            ->map(fn ($log) => [
-                'id'          => $log->id,
-                'tiang_id'    => $log->tiang_id,
-                'kode_tiang'  => $log->tiang?->kode_tiang,
-                'jenis'       => $log->jenis_anomali,
-                'keterangan'  => $log->keterangan,
-                'detected_at' => $log->detected_at?->toISOString(),
-            ]);
+            ->get();
 
-        return $this->success($data);
+        return $this->success(AnomalyLogResource::collection($data));
     }
 
     /**
@@ -72,6 +65,6 @@ class AnomalyApiController extends Controller
             $tiang->saveQuietly();
         }
 
-        return $this->success($log->fresh(), 'Anomali berhasil diselesaikan.');
+        return $this->success(new AnomalyLogResource($log->fresh()), 'Anomali berhasil diselesaikan.');
     }
 }

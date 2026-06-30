@@ -6,16 +6,23 @@ use App\Http\Controllers\Admin\OperatorIspController;
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\ExportController;
+use App\Http\Controllers\HealthController;
 use App\Http\Controllers\InspectionController;
 use App\Http\Controllers\TiangController;
 use Illuminate\Support\Facades\Route;
+
+// ============================================================
+// HEALTH CHECK (tanpa auth, rate limited)
+// ============================================================
+Route::get('/health', [HealthController::class, 'check'])->middleware('throttle:30,1')->name('health');
 
 // ============================================================
 // AUTH
 // ============================================================
 Route::middleware('guest')->group(function () {
     Route::get('/login', [LoginController::class, 'showLoginForm'])->name('login');
-    Route::post('/login', [LoginController::class, 'login']);
+    // [KEAMANAN] Rate limiter login — 5 percobaan/menit per email+IP (didefinisikan di AppServiceProvider)
+    Route::post('/login', [LoginController::class, 'login'])->middleware('throttle:login');
 });
 
 Route::post('/logout', [LoginController::class, 'logout'])->name('logout')->middleware('auth');
@@ -28,7 +35,7 @@ Route::get('/', fn () => redirect()->route('dashboard'));
 // ============================================================
 // AUTHENTICATED ROUTES
 // ============================================================
-Route::middleware('auth')->group(function () {
+Route::middleware(['auth', 'session.timeout'])->group(function () {
 
     // === DASHBOARD ===
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');

@@ -80,7 +80,7 @@
         .card-header { background: #fff; border-bottom: 1px solid #f0f2f5; font-weight: 600; }
         .stat-card {
             border-radius: var(--radius); padding: 1.25rem 1.5rem;
-            display: flex; align-items: center; gap: 1rem;
+            display: flex; flex-direction: row; align-items: center; gap: 1rem;
             transition: transform .2s, box-shadow .2s;
         }
         .stat-card:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(0,0,0,.1); }
