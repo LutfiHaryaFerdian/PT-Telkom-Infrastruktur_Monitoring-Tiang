@@ -123,7 +123,7 @@ class MasterDataController extends Controller
 
     public function stosIndex(): View
     {
-        $stos = Sto::with('area.district')->withCount('tiangTelekomunikasi')->orderBy('kode')->get();
+        $stos = Sto::with('area.district')->withCount('tiangTelekomunikasi as tiang_count')->orderBy('kode')->get();
         $areas = Area::with('district')->orderBy('name')->get();
         return view('master.stos', compact('stos', 'areas'));
     }
@@ -193,7 +193,7 @@ class MasterDataController extends Controller
 
     public function jenisTiangIndex(): View
     {
-        $jenisTiang = JenisTiang::withCount('tiangTelekomunikasi')->orderBy('nama')->get();
+        $jenisTiang = JenisTiang::withCount('tiangTelekomunikasi as tiang_count')->orderBy('nama')->get();
         return view('master.jenis-tiang', compact('jenisTiang'));
     }
 
@@ -236,7 +236,7 @@ class MasterDataController extends Controller
 
     public function kondisiTiangIndex(): View
     {
-        $kondisiTiang = KondisiTiang::withCount('tiangTelekomunikasi')->orderBy('nama')->get();
+        $kondisiTiang = KondisiTiang::withCount('tiangTelekomunikasi as tiang_count')->orderBy('nama')->get();
         return view('master.kondisi-tiang', compact('kondisiTiang'));
     }
 
