@@ -153,3 +153,30 @@ Sistem memiliki mesin pemeriksa otomatis untuk menjaga kebersihan data aset tian
 *   **Scheduler Backup Database:** Menyediakan command `php artisan db:backup` yang memicu `pg_dump` PostgreSQL secara otomatis setiap pukul 01:00 pagi dengan retensi logis 7 hari (backup lama dihapus otomatis).
 *   **Health Check Endpoint (`/health`):** Endpoint JSON public terenkripsi dan terproteksi rate limiter untuk memonitor status kesehatan Database, Cache (Redis/DB), dan Storage (Local/S3).
 
+---
+
+## 6. Fitur Heatmap & Persentase Statistik (Terbaru)
+
+### **A. Peta Sebaran Heatmap**
+*   **API Endpoint (`GET /api/tiang/heatmap`)**:
+    *   Menerima parameter filter wilayah dan parameter wajib `type` (`tiang` atau `anomali`).
+    *   Mengoptimalkan performa rendering browser dengan mengelompokkan data sebaran GPS menggunakan pembulatan presisi `ROUND(latitude::numeric, 3)` dan `ROUND(longitude::numeric, 3)`. Backend hanya mengirimkan titik teragregasi beserta bobot kerapatan (`weight`).
+*   **Interaktivitas UI**:
+    *   Tersedia tombol toggle **"Marker Cluster" / "Heatmap"** yang responsif pada card peta dashboard.
+    *   Dropdown tipe heatmap (**"Heatmap: Tiang"** dan **"Heatmap: Anomali"**) akan muncul hanya saat mode Heatmap aktif.
+    *   Menggunakan library **Leaflet.heat** yang dinamis dan terintegrasi penuh dengan seluruh filter pencarian & regional.
+
+### **B. Statistik Persentase & Visualisasi Baru**
+*   **Metrik Persentase Realtime**:
+    *   Setiap metrik utama (Kondisi NOK, Anomali Aktif, Menunggu Verifikasi) kini menampilkan nilai persentase terhadap total tiang dengan format angka Indonesia (pemisah desimal koma, misal: `9,84%`).
+    *   Grafik Donut Kondisi menampilkan persentase langsung pada legenda dan tooltip untuk pemahaman cepat.
+*   **Tabel Persentase per STO**:
+    *   Menampilkan data STO, Jumlah Tiang, Jumlah Anomali, dan Persentase Anomali.
+    *   Diurutkan secara descending (`anomali_percent` terbesar di atas) untuk membantu admin memprioritaskan inspeksi wilayah bermasalah.
+    *   Baris STO dengan tingkat anomali **> 10%** otomatis diberi highlight visual berwarna merah muda tipis (`#fee2e2`).
+*   **Grafik Baru (Breakdown Verifikasi & Legalitas ISP)**:
+    *   **Breakdown Verifikasi**: Grafik donut baru yang menampilkan rincian persentase status verifikasi tiang (OK, Pending, Ditolak, Double Input).
+    *   **Legalitas ISP**: Grafik donut baru yang menampilkan status legalitas ISP penumpang kabel tiang (Legal, Perlu Verifikasi, Ilegal).
+*   **Keamanan Content Security Policy (CSP)**:
+    *   Domain CDN eksternal untuk leaflet-heat (`https://cdn.jsdelivr.net`) telah didaftarkan dengan aman pada `SecurityHeadersMiddleware.php` bagian `script-src` dan `connect-src`.
+
