@@ -189,6 +189,8 @@ class DashboardApiController extends Controller
                 ],
             ];
 
+            $perluFollowup = (clone $tiangOperatorBase)->where('tiang_operator.status_tindaklanjut', 'perlu_followup')->count();
+
             return [
                 'total_district'           => $totalDistrict,
                 'total_area'               => $totalArea,
@@ -210,6 +212,7 @@ class DashboardApiController extends Controller
                 'pending_percent'          => $totalTiang > 0 ? round(($tiangPendingVerifikasi / $totalTiang) * 100, 2) : 0.0,
                 'verifikasi_breakdown'     => $verifikasiBreakdown,
                 'legalitas_isp_breakdown'  => $legalitasBreakdown,
+                'perlu_followup'           => $perluFollowup,
             ];
         });
 

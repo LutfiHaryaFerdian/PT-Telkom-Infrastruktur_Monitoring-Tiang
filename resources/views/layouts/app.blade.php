@@ -114,6 +114,20 @@
         <a href="{{ route('tiang.index') }}" class="sidebar-link {{ request()->routeIs('tiang.*') ? 'active' : '' }}">
             <i class="bi bi-broadcast"></i> Data Tiang
         </a>
+        @php
+            $perluFollowupCount = cache()->remember('tindaklanjut_perlu_followup_count', 3600, function() {
+                return \App\Models\TiangOperator::where('status_tindaklanjut', 'perlu_followup')->count();
+            });
+        @endphp
+        <a href="{{ route('tindaklanjut.index') }}" class="sidebar-link {{ request()->routeIs('tindaklanjut.*') ? 'active' : '' }}">
+            <i class="bi bi-envelope-paper"></i>
+            <span class="flex-grow-1">Tindak Lanjut ISP</span>
+            @if($perluFollowupCount > 0)
+                <span class="badge bg-danger rounded-circle d-flex align-items-center justify-content-center" style="width:18px;height:18px;font-size:.65rem;padding:0">
+                    {{ $perluFollowupCount }}
+                </span>
+            @endif
+        </a>
         <a href="{{ route('export.index') }}" class="sidebar-link {{ request()->routeIs('export.*') ? 'active' : '' }}">
             <i class="bi bi-download"></i> Export Data
         </a>

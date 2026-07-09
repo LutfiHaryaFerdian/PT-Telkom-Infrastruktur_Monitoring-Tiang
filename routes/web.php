@@ -140,4 +140,36 @@ Route::middleware(['auth', 'session.timeout'])->group(function () {
             Route::get('operator-isp/trashed', [OperatorIspController::class, 'trashed'])->name('operator-isp.trashed');
         });
     });
+
+    // === TINDAK LANJUT ISP PENUMPANG ===
+    Route::get('/tindaklanjut', [\App\Http\Controllers\TindakLanjutController::class, 'index'])
+         ->name('tindaklanjut.index');
+    Route::get('/tindaklanjut/data', [\App\Http\Controllers\TindakLanjutController::class, 'data'])
+         ->name('tindaklanjut.data');
+    Route::get('/tindaklanjut/{tiangOperator}', [\App\Http\Controllers\TindakLanjutController::class, 'show'])
+         ->name('tindaklanjut.show');
+    Route::patch('/tindaklanjut/{tiangOperator}/selesai', [\App\Http\Controllers\TindakLanjutController::class, 'selesai'])
+         ->name('tindaklanjut.selesai')->middleware('role:admin');
+    Route::patch('/tindaklanjut/{tiangOperator}/reset', [\App\Http\Controllers\TindakLanjutController::class, 'reset'])
+         ->name('tindaklanjut.reset')->middleware('role:admin');
+    Route::get('/tindaklanjut/{tiangOperator}/timeline', [\App\Http\Controllers\TindakLanjutController::class, 'timelinePartial'])
+         ->name('tindaklanjut.timeline');
+
+    // Surat
+    Route::post('/isp-surat', [\App\Http\Controllers\IspSuratController::class, 'store'])
+         ->name('isp-surat.store');
+    Route::delete('/isp-surat/{ispSurat}', [\App\Http\Controllers\IspSuratController::class, 'destroy'])
+         ->name('isp-surat.destroy')->middleware('role:admin');
+
+    // Balasan
+    Route::post('/isp-balasan', [\App\Http\Controllers\IspBalasanController::class, 'store'])
+         ->name('isp-balasan.store');
+    Route::delete('/isp-balasan/{ispBalasan}', [\App\Http\Controllers\IspBalasanController::class, 'destroy'])
+         ->name('isp-balasan.destroy')->middleware('role:admin');
+
+    // Follow-up
+    Route::post('/isp-followup', [\App\Http\Controllers\IspFollowupController::class, 'store'])
+         ->name('isp-followup.store');
+    Route::delete('/isp-followup/{ispFollowup}', [\App\Http\Controllers\IspFollowupController::class, 'destroy'])
+         ->name('isp-followup.destroy')->middleware('role:admin');
 });

@@ -355,7 +355,90 @@ async function loadMarkers() {
     (json.data?.data || []).forEach(d => {
         const color = markerColor(d);
         const m = L.marker([d.latitude, d.longitude], { icon: makeIcon(color) });
-        m.bindPopup(`<b>${d.kode_tiang || 'N/A'}</b><br><small>${d.status_verifikasi}</small><br><a href="/tiang/${d.id}" class="btn btn-xs btn-sm btn-primary mt-1" style="font-size:.75rem;padding:.2rem .5rem">Detail</a>`);
+        
+        m.bindPopup(`
+            <div style="min-width: 220px; font-family: 'Inter', sans-serif;">
+                <div class="fw-bold fs-6 mb-1 text-primary">${d.kode_tiang || 'N/A'}</div>
+                <div class="mb-2"><span class="badge bg-light text-dark text-capitalize" style="font-size: .7rem;">Verifikasi: ${d.status_verifikasi}</span></div>
+                <div id="popup-isp-${d.id}" style="font-size: .8rem; line-height: 1.3;">
+                    <div class="text-muted py-1"><span class="spinner-border spinner-border-sm me-1 text-primary" style="width:12px;height:12px;"></span>Memuat status ISP...</div>
+                </div>
+                <div class="border-top pt-2 mt-2">
+                    <a href="/tiang/${d.id}" class="btn btn-xs btn-primary w-100 text-center" style="font-size:.75rem;padding:.25rem .5rem;color:#fff;">
+                        <i class="bi bi-eye me-1"></i>Detail Tiang
+                    </a>
+                </div>
+            </div>
+        `);
+
+        m.on('click', async function() {
+            try {
+                const res = await fetch(`/api/tiang/${d.id}/isp-status`);
+                const statusJson = await res.json();
+                const popupDiv = document.getElementById(`popup-isp-${d.id}`);
+                if (popupDiv) {
+                    const ispList = statusJson.data.isp_list || [];
+                    if (ispList.length === 0) {
+                        popupDiv.innerHTML = '<div class="text-muted py-1 small">Tidak ada ISP menumpang</div>';
+                    } else {
+                        const statusClass = {
+                            belum_disurati: 'bg-danger text-white',
+                            sudah_disurati: 'bg-warning text-dark',
+                            ada_balasan: 'bg-primary text-white',
+                            perlu_followup: 'bg-orange text-white',
+                            selesai: 'bg-success text-white'
+                        };
+                        const statusLabel = {
+                            belum_disurati: 'Belum Disurati',
+                            sudah_disurati: 'Sudah Disurati',
+                            ada_balasan: 'Ada Balasan',
+                            perlu_followup: 'Perlu Follow-up',
+                            selesai: 'Selesai'
+                        };
+                        const legalLabel = {
+                            legal: 'Legal',
+                            ilegal: 'Ilegal',
+                            perlu_verifikasi: 'Perlu Verifikasi'
+                        };
+                        const legalColor = {
+                            legal: 'text-success',
+                            ilegal: 'text-danger',
+                            perlu_verifikasi: 'text-warning'
+                        };
+
+                        let html = '<div class="fw-semibold mb-1 text-secondary" style="font-size: .75rem;">ISP Penumpang:</div>';
+                        html += '<div style="max-height: 120px; overflow-y: auto; padding-right: 2px;">';
+                        ispList.forEach(isp => {
+                            const badge = statusClass[isp.status_tindaklanjut] || 'bg-secondary text-white';
+                            const label = statusLabel[isp.status_tindaklanjut] || isp.status_tindaklanjut;
+                            const legal = legalLabel[isp.status_legalitas] || isp.status_legalitas;
+                            const lColor = legalColor[isp.status_legalitas] || 'text-secondary';
+                            html += `
+                                <div class="mb-2 pb-1 border-bottom">
+                                    <div class="d-flex justify-content-between align-items-center mb-1">
+                                        <span class="fw-bold">${isp.nama_operator}</span>
+                                        <span class="small ${lColor} fw-semibold">${legal}</span>
+                                    </div>
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <span class="badge ${badge}" style="font-size: .65rem; padding: .15rem .3rem;">${label}</span>
+                                        ${isp.surat_terakhir ? `<span class="text-muted" style="font-size: .62rem;"><i class="bi bi-envelope-paper me-1"></i>${isp.surat_terakhir}</span>` : ''}
+                                    </div>
+                                </div>
+                            `;
+                        });
+                        html += '</div>';
+                        popupDiv.innerHTML = html;
+                    }
+                }
+            } catch (err) {
+                console.error(err);
+                const popupDiv = document.getElementById(`popup-isp-${d.id}`);
+                if (popupDiv) {
+                    popupDiv.innerHTML = '<div class="text-danger py-1 small">Gagal memuat status ISP</div>';
+                }
+            }
+        });
+
         markerCluster.addLayer(m);
     });
 }

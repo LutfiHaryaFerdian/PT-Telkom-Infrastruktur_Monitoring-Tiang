@@ -63,4 +63,8 @@ Route::middleware(['web', 'auth'])->group(function () {
     Route::middleware('throttle:5,1')->group(function () {
         Route::get('/import/{id}/progress', [ImportApiController::class, 'progress']);
     });
+
+    // === TINDAK LANJUT ISP POPUP GIS ===
+    Route::get('/tiang/{tiang}/isp-status', [\App\Http\Controllers\TindakLanjutController::class, 'apiIspStatus'])
+         ->name('api.tiang.isp-status');
 });
