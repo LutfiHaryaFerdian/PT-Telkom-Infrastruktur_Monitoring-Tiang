@@ -110,7 +110,7 @@ body {
 }
 
 /* Logo icon bubble — red brand */
-.sidebar-brand > div > div:first-child {
+.sidebar-brand > div:first-child {
   background: var(--color-primary) !important;
 }
 

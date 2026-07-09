@@ -66,13 +66,13 @@ class DashboardApiController extends Controller
             $tiangIds = (clone $baseQuery)->pluck('id');
             $anomaliAktif = AnomalyLog::whereIn('tiang_id', $tiangIds)->where('status', 'aktif')->count();
 
+            $tiangAnomaliCount = (clone $baseQuery)->where('has_anomali', true)->count();
             $tiangPendingVerifikasi = (clone $baseQuery)->where('status_verifikasi', 'pending')->count();
 
-            $anomaliPerSto = AnomalyLog::whereIn('tiang_id', $tiangIds)
-                ->where('status', 'aktif')
-                ->join('tiang_telekomunikasi', 'tiang_telekomunikasi.id', '=', 'anomali_log.tiang_id')
-                ->selectRaw('tiang_telekomunikasi.sto_id, COUNT(*) as total')
-                ->groupBy('tiang_telekomunikasi.sto_id')
+            $anomaliPerSto = (clone $baseQuery)
+                ->where('has_anomali', true)
+                ->selectRaw('sto_id, COUNT(*) as total')
+                ->groupBy('sto_id')
                 ->pluck('total', 'sto_id')
                 ->all();
 
@@ -85,7 +85,7 @@ class DashboardApiController extends Controller
                 ->map(function ($item) use ($anomaliPerSto) {
                     $anomaliCount = $anomaliPerSto[$item->sto_id] ?? 0;
                     $totalTiangSto = (int)$item->total;
-                    $anomaliPercent = $totalTiangSto > 0 ? round(($anomaliCount / $totalTiangSto) * 100, 2) : 0.0;
+                    $anomaliPercent = $totalTiangSto > 0 ? min(100.0, round(($anomaliCount / $totalTiangSto) * 100, 2)) : 0.0;
                     return [
                         'sto_kode'        => $item->sto?->kode,
                         'sto_nama'        => $item->sto?->nama,
@@ -205,7 +205,7 @@ class DashboardApiController extends Controller
                 // New additions:
                 'kondisi_nok'              => $tiangKondisiNok,
                 'kondisi_nok_percent'      => $totalTiang > 0 ? round(($tiangKondisiNok / $totalTiang) * 100, 2) : 0.0,
-                'anomali_percent'          => $totalTiang > 0 ? round(($anomaliAktif / $totalTiang) * 100, 2) : 0.0,
+                'anomali_percent'          => $totalTiang > 0 ? min(100.0, round(($tiangAnomaliCount / $totalTiang) * 100, 2)) : 0.0,
                 'pending_verifikasi'       => $tiangPendingVerifikasi,
                 'pending_percent'          => $totalTiang > 0 ? round(($tiangPendingVerifikasi / $totalTiang) * 100, 2) : 0.0,
                 'verifikasi_breakdown'     => $verifikasiBreakdown,

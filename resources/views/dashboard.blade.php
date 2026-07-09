@@ -71,8 +71,8 @@
 <div class="row g-3 mb-3" id="stats-row-1">
     @foreach([
         ['id'=>'total_tiang','label'=>'Total Tiang','icon'=>'broadcast','color'=>'#1a3a5c','bg'=>'#e8f0fb'],
-        ['id'=>'total_district','label'=>'District','icon'=>'geo-alt','color'=>'#6f42c1','bg'=>'#f0ebff'],
         ['id'=>'total_area','label'=>'Area','icon'=>'map','color'=>'#0d9488','bg'=>'#e6faf8'],
+        ['id'=>'total_district','label'=>'District','icon'=>'geo-alt','color'=>'#6f42c1','bg'=>'#f0ebff'],
         ['id'=>'total_sto','label'=>'STO','icon'=>'building','color'=>'#c05621','bg'=>'#fff3e8'],
     ] as $s)
     <div class="col-6 col-lg-3">

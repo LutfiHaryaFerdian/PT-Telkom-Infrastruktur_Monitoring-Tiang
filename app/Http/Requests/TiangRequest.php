@@ -90,5 +90,8 @@ class TiangRequest extends FormRequest
         if ($this->has('nama_teknisi') && $this->nama_teknisi !== null) {
             $this->merge(['nama_teknisi' => trim($this->nama_teknisi)]);
         }
+        if (!$this->has('operators')) {
+            $this->merge(['operators' => []]);
+        }
     }
 }

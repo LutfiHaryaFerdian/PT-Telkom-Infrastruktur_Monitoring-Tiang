@@ -120,17 +120,13 @@ class AnomalyDetectionService
 
     /**
      * 4. ISP TIDAK TERIDENTIFIKASI:
-     * Operator non-predefined yang tidak memiliki keterangan atau keterangannya mengandung
+     * Semua operator yang tidak memiliki keterangan atau keterangannya mengandung
      * 'tidak diketahui', 'tidak di ketahui', atau 'no label'.
      */
     protected function checkIspTidakTeridentifikasi(TiangTelekomunikasi $tiang): void
     {
         $unknownOperators = $tiang->tiangOperator
             ->filter(function ($pivot) {
-                if ($pivot->operator && $pivot->operator->is_predefined) {
-                    return false; // operator predefined, skip
-                }
-
                 $ket = strtolower($pivot->keterangan_operator ?? '');
                 return empty(trim($pivot->keterangan_operator ?? ''))
                     || str_contains($ket, 'tidak diketahui')
@@ -146,7 +142,7 @@ class AnomalyDetectionService
             $this->insertAnomali(
                 $tiang->id,
                 'isp_tidak_teridentifikasi',
-                "Terdapat ISP non-predefined yang tidak teridentifikasi: {$namaList}."
+                "Terdapat ISP yang tidak teridentifikasi: {$namaList}."
             );
         } else {
             $this->resolveAnomali($tiang->id, 'isp_tidak_teridentifikasi');
