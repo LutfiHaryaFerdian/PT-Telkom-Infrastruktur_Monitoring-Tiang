@@ -67,6 +67,8 @@ class AnomalyDetectionService
                 . "Jarak lat: " . abs($tiang->latitude - $duplicate->latitude)
                 . ", lng: " . abs($tiang->longitude - $duplicate->longitude)
             );
+        } else {
+            $this->resolveAnomali($tiang->id, 'double_input');
         }
     }
 
@@ -93,6 +95,8 @@ class AnomalyDetectionService
                 'koordinat_tidak_valid',
                 'Koordinat tiang berada di luar wilayah Lampung: ' . implode(', ', $details)
             );
+        } else {
+            $this->resolveAnomali($tiang->id, 'koordinat_tidak_valid');
         }
     }
 
@@ -109,13 +113,15 @@ class AnomalyDetectionService
                 'kondisi_nok',
                 "Kondisi tiang \"{$kondisi->nama}\" (level: {$kondisi->level}) memerlukan perhatian."
             );
+        } else {
+            $this->resolveAnomali($tiang->id, 'kondisi_nok');
         }
     }
 
     /**
      * 4. ISP TIDAK TERIDENTIFIKASI:
      * Operator non-predefined yang tidak memiliki keterangan atau keterangannya mengandung
-     * 'tidak diketahui' atau 'no label'.
+     * 'tidak diketahui', 'tidak di ketahui', atau 'no label'.
      */
     protected function checkIspTidakTeridentifikasi(TiangTelekomunikasi $tiang): void
     {
@@ -128,6 +134,7 @@ class AnomalyDetectionService
                 $ket = strtolower($pivot->keterangan_operator ?? '');
                 return empty(trim($pivot->keterangan_operator ?? ''))
                     || str_contains($ket, 'tidak diketahui')
+                    || str_contains($ket, 'tidak di ketahui')
                     || str_contains($ket, 'no label');
             });
 
@@ -141,6 +148,8 @@ class AnomalyDetectionService
                 'isp_tidak_teridentifikasi',
                 "Terdapat ISP non-predefined yang tidak teridentifikasi: {$namaList}."
             );
+        } else {
+            $this->resolveAnomali($tiang->id, 'isp_tidak_teridentifikasi');
         }
     }
 
@@ -161,6 +170,8 @@ class AnomalyDetectionService
                 'verifikasi_pending',
                 "Tiang belum diverifikasi selama {$hariLewat} hari sejak tanggal input ({$tiang->tgl_input->format('d/m/Y')})."
             );
+        } else {
+            $this->resolveAnomali($tiang->id, 'verifikasi_pending');
         }
     }
 
@@ -192,29 +203,54 @@ class AnomalyDetectionService
                 'data_tidak_lengkap',
                 'Data tiang tidak lengkap — field kosong: ' . implode(', ', $missing) . '.'
             );
+        } else {
+            $this->resolveAnomali($tiang->id, 'data_tidak_lengkap');
         }
     }
 
     /**
      * Insert anomali ke database.
-     * Jika PARTIAL UNIQUE INDEX dilanggar → UniqueConstraintViolationException → abaikan.
+     * Cek keberadaan terlebih dahulu sebelum insert untuk mencegah UniqueConstraintViolationException
+     * yang membatalkan/meng-abort transaksi SQL PostgreSQL saat ini.
      */
     protected function insertAnomali(int $tiangId, string $jenis, string $keterangan): void
     {
-        try {
-            AnomalyLog::create([
-                'tiang_id'    => $tiangId,
-                'jenis_anomali' => $jenis,
-                'keterangan'  => $keterangan,
-                'status'      => 'aktif',
-                'detected_at' => now(),
-            ]);
-        } catch (UniqueConstraintViolationException $e) {
-            // Anomali jenis ini sudah aktif untuk tiang ini → abaikan, bukan error
-            Log::debug("AnomalyDetectionService: duplikat anomali diabaikan", [
-                'tiang_id' => $tiangId,
-                'jenis'    => $jenis,
-            ]);
+        $exists = AnomalyLog::where('tiang_id', $tiangId)
+            ->where('jenis_anomali', $jenis)
+            ->where('status', 'aktif')
+            ->exists();
+
+        if (!$exists) {
+            try {
+                AnomalyLog::create([
+                    'tiang_id'    => $tiangId,
+                    'jenis_anomali' => $jenis,
+                    'keterangan'  => $keterangan,
+                    'status'      => 'aktif',
+                    'detected_at' => now(),
+                ]);
+            } catch (UniqueConstraintViolationException $e) {
+                // Fallback catch jika ada race condition
+                Log::debug("AnomalyDetectionService: duplikat anomali diabaikan", [
+                    'tiang_id' => $tiangId,
+                    'jenis'    => $jenis,
+                ]);
+            }
         }
+    }
+
+    /**
+     * Tandai anomali sebagai resolved jika aturan sudah terpenuhi/tidak melanggar lagi.
+     */
+    protected function resolveAnomali(int $tiangId, string $jenis): void
+    {
+        AnomalyLog::where('tiang_id', $tiangId)
+            ->where('jenis_anomali', $jenis)
+            ->where('status', 'aktif')
+            ->update([
+                'status'      => 'resolved',
+                'resolved_at' => now(),
+                'resolved_by' => auth()->id() ?? null,
+            ]);
     }
 }

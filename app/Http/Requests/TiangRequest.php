@@ -30,7 +30,7 @@ class TiangRequest extends FormRequest
             'kondisi_tiang_id'            => ['required', 'integer', 'exists:kondisi_tiang,id'],
             'latitude'                    => ['required', 'numeric', 'between:-7.0,-4.0'],
             'longitude'                   => ['required', 'numeric', 'between:104.0,107.0'],
-            'nama_jalan'                  => ['required', 'string', 'max:1000', Rule::notRegex('/^\s+$/')],
+            'nama_jalan'                  => ['required', 'string', 'max:1000', 'not_regex:/^\s+$/'],
             'jml_tiang_operator_sekitar'  => ['required', 'integer', 'min:0'],
             'jml_kabel_dc_telkom'         => ['required', 'integer', 'min:0'],
             'jml_ku_telkom'               => ['required', 'integer', 'min:0'],
@@ -73,6 +73,7 @@ class TiangRequest extends FormRequest
             'longitude.between'       => 'Longitude harus antara 104.0 dan 107.0 (area Lampung).',
             'nama_jalan.required'     => 'Nama jalan wajib diisi.',
             'nama_jalan.regex'        => 'Nama jalan tidak boleh hanya terdiri dari spasi.',
+            'nama_jalan.not_regex'    => 'Nama jalan tidak boleh hanya terdiri dari spasi.',
             'tgl_input.required'      => 'Tanggal input wajib diisi.',
             'id_tiang_instansi.unique'=> 'ID tiang instansi sudah digunakan oleh tiang lain.',
         ];

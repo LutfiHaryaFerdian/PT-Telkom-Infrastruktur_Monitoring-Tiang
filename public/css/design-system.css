@@ -1,0 +1,755 @@
+/* ============================================================
+   DESIGN SYSTEM — TIF District Lampung
+   PT Telkom Infrastruktur Indonesia
+   ============================================================ */
+
+/* ── TOKEN DEFINITIONS ──────────────────────────────────────── */
+:root {
+  /* Brand — Merah Telkom */
+  --color-primary: #b70100;
+  --color-primary-hover: #930100;
+  --color-primary-container: #e60000;
+  --color-on-primary: #ffffff;
+  --color-on-primary-container: #fff7f5;
+  --color-surface-tint: #c00000;
+
+  /* Secondary Red */
+  --color-secondary: #ba0a04;
+  --color-secondary-container: #df2d1e;
+  --color-on-secondary: #ffffff;
+
+  /* Tertiary Blue (accent/info) */
+  --color-tertiary: #004ed0;
+  --color-tertiary-container: #2d68f0;
+  --color-on-tertiary: #ffffff;
+  --color-on-tertiary-container: #f8f7ff;
+
+  /* Surface & Background */
+  --color-background: #fcf9f8;
+  --color-surface: #fcf9f8;
+  --color-surface-container-lowest: #ffffff;
+  --color-surface-container-low: #f6f3f2;
+  --color-surface-container: #f0eded;
+  --color-surface-container-high: #eae7e7;
+  --color-surface-container-highest: #e5e2e1;
+  --color-surface-dim: #dcd9d9;
+  --color-inverse-surface: #313030;
+  --color-inverse-on-surface: #f3f0ef;
+
+  /* Text */
+  --color-on-surface: #1c1b1b;
+  --color-on-surface-variant: #5f3f3a;
+
+  /* Border & Outline */
+  --color-outline: #946e68;
+  --color-outline-variant: #e9bcb5;
+
+  /* Error */
+  --color-error: #ba1a1a;
+  --color-error-container: #ffdad6;
+  --color-on-error: #ffffff;
+
+  /* Typography */
+  --font-primary: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+
+  /* Spacing (base 8px) */
+  --space-xs: 4px;
+  --space-sm: 12px;
+  --space-md: 24px;
+  --space-lg: 48px;
+  --space-xl: 80px;
+  --space-gutter: 24px;
+
+  /* Radius */
+  --radius-sm: 0.25rem;
+  --radius-default: 0.5rem;
+  --radius-md: 0.75rem;
+  --radius-lg: 1rem;
+  --radius-full: 9999px;
+
+  /* Elevation */
+  --shadow-card: 0 1px 3px rgba(28, 27, 27, 0.06), 0 1px 2px rgba(28, 27, 27, 0.04);
+  --shadow-hover: 0 4px 12px rgba(28, 27, 27, 0.08);
+  --shadow-modal: 0 8px 24px rgba(28, 27, 27, 0.12);
+}
+
+/* ============================================================
+   [1] GLOBAL
+   ============================================================ */
+*,
+*::before,
+*::after {
+  font-family: var(--font-primary) !important;
+  box-sizing: border-box;
+}
+
+body {
+  background-color: var(--color-background) !important;
+  color: var(--color-on-surface) !important;
+  font-family: var(--font-primary) !important;
+  font-size: 16px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* ============================================================
+   [2] SIDEBAR & NAVBAR
+   ============================================================ */
+#sidebar {
+  background: var(--color-inverse-surface) !important;
+  box-shadow: 2px 0 16px rgba(28, 27, 27, 0.15) !important;
+}
+
+.sidebar-brand-title {
+  color: rgba(243, 240, 239, 0.6) !important;
+}
+
+.sidebar-brand-name {
+  color: var(--color-inverse-on-surface) !important;
+}
+
+/* Logo icon bubble — red brand */
+.sidebar-brand > div > div:first-child {
+  background: var(--color-primary) !important;
+}
+
+.sidebar-label {
+  color: rgba(243, 240, 239, 0.4) !important;
+}
+
+.sidebar-link {
+  color: rgba(243, 240, 239, 0.8) !important;
+  border-left: 3px solid transparent;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.sidebar-link:hover {
+  background: rgba(255, 255, 255, 0.08) !important;
+  color: var(--color-inverse-on-surface) !important;
+}
+
+.sidebar-link.active {
+  background: var(--color-primary) !important;
+  color: var(--color-on-primary) !important;
+  border-left-color: var(--color-on-primary-container) !important;
+}
+
+/* Topbar */
+#topbar {
+  background: var(--color-surface-container-lowest) !important;
+  border-bottom: 1px solid var(--color-outline-variant) !important;
+  box-shadow: var(--shadow-card) !important;
+}
+
+/* Topbar brand badge */
+#topbar .badge {
+  background: var(--color-primary) !important;
+  color: var(--color-on-primary) !important;
+  border-radius: var(--radius-full) !important;
+  font-size: 0.72rem !important;
+  font-weight: 500 !important;
+}
+
+/* Breadcrumb links */
+.breadcrumb-item a {
+  color: var(--color-primary) !important;
+  text-decoration: none;
+}
+
+.breadcrumb-item.active {
+  color: var(--color-on-surface-variant) !important;
+}
+
+/* Sidebar toggle button */
+#sidebar-toggle {
+  color: var(--color-primary) !important;
+}
+
+/* ============================================================
+   [3] BUTTONS
+   ============================================================ */
+.btn {
+  border-radius: var(--radius-default) !important;
+  font-weight: 500 !important;
+  font-size: 14px !important;
+  transition: background 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease !important;
+}
+
+.btn-primary {
+  background: var(--color-primary) !important;
+  border-color: var(--color-primary) !important;
+  color: var(--color-on-primary) !important;
+}
+
+.btn-primary:hover,
+.btn-primary:focus {
+  background: var(--color-primary-hover) !important;
+  border-color: var(--color-primary-hover) !important;
+  color: var(--color-on-primary) !important;
+  box-shadow: 0 0 0 3px rgba(183, 1, 0, 0.15) !important;
+}
+
+.btn-outline-primary {
+  border: 1.5px solid var(--color-primary) !important;
+  color: var(--color-primary) !important;
+  background: transparent !important;
+}
+
+.btn-outline-primary:hover,
+.btn-outline-primary:focus {
+  background: var(--color-on-primary-container) !important;
+  color: var(--color-primary) !important;
+  border-color: var(--color-primary) !important;
+}
+
+.btn-danger {
+  background: var(--color-error) !important;
+  border-color: var(--color-error) !important;
+  color: var(--color-on-error) !important;
+}
+
+.btn-danger:hover,
+.btn-danger:focus {
+  background: #9b1616 !important;
+  border-color: #9b1616 !important;
+  color: var(--color-on-error) !important;
+}
+
+.btn-info {
+  background: var(--color-tertiary) !important;
+  border-color: var(--color-tertiary) !important;
+  color: var(--color-on-tertiary) !important;
+}
+
+.btn-info:hover,
+.btn-info:focus {
+  background: #003aaa !important;
+  border-color: #003aaa !important;
+  color: var(--color-on-tertiary) !important;
+}
+
+.btn-success {
+  background: #15803d !important;
+  border-color: #15803d !important;
+  color: #ffffff !important;
+}
+
+.btn-secondary {
+  background: var(--color-surface-container-high) !important;
+  border-color: var(--color-outline-variant) !important;
+  color: var(--color-on-surface) !important;
+}
+
+.btn-secondary:hover {
+  background: var(--color-surface-container-highest) !important;
+}
+
+.btn-sm {
+  font-size: 13px !important;
+  padding: 0.3rem 0.7rem !important;
+}
+
+/* ============================================================
+   [4] CARD
+   ============================================================ */
+.card {
+  background: var(--color-surface-container-lowest) !important;
+  border: 1px solid var(--color-outline-variant) !important;
+  border-radius: var(--radius-md) !important;
+  box-shadow: var(--shadow-card) !important;
+  transition: box-shadow 0.2s ease !important;
+}
+
+.card:hover {
+  box-shadow: var(--shadow-hover) !important;
+}
+
+.card-header {
+  background: var(--color-surface-container-lowest) !important;
+  border-bottom: 1px solid var(--color-outline-variant) !important;
+  font-weight: 600 !important;
+  color: var(--color-on-surface) !important;
+  border-radius: var(--radius-md) var(--radius-md) 0 0 !important;
+}
+
+.card-footer {
+  background: var(--color-surface-container-low) !important;
+  border-top: 1px solid var(--color-outline-variant) !important;
+}
+
+/* ============================================================
+   [5] METRIC CARD (stat cards)
+   ============================================================ */
+.stat-card {
+  background: var(--color-surface-container-lowest) !important;
+  border: 1px solid var(--color-outline-variant) !important;
+  border-radius: var(--radius-md) !important;
+  box-shadow: var(--shadow-card) !important;
+  transition: transform 0.2s ease, box-shadow 0.2s ease !important;
+}
+
+.stat-card:hover {
+  transform: translateY(-2px) !important;
+  box-shadow: var(--shadow-hover) !important;
+}
+
+.stat-icon {
+  background: var(--color-on-primary-container) !important;
+  color: var(--color-primary) !important;
+  border-radius: var(--radius-default) !important;
+  width: 52px !important;
+  height: 52px !important;
+}
+
+.stat-value {
+  font-size: 28px !important;
+  font-weight: 700 !important;
+  color: var(--color-on-surface) !important;
+  line-height: 1.1 !important;
+}
+
+.stat-label {
+  font-size: 13px !important;
+  color: var(--color-on-surface-variant) !important;
+  margin-top: 0.2rem !important;
+}
+
+/* ============================================================
+   [6] INPUT & FORM
+   ============================================================ */
+.form-control,
+.form-select {
+  background: var(--color-surface-container-lowest) !important;
+  border: 1px solid var(--color-outline-variant) !important;
+  border-radius: var(--radius-default) !important;
+  color: var(--color-on-surface) !important;
+  font-size: 14px !important;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease !important;
+}
+
+.form-control::placeholder {
+  color: var(--color-on-surface-variant) !important;
+  opacity: 0.6 !important;
+}
+
+.form-control:focus,
+.form-select:focus {
+  border-color: var(--color-primary) !important;
+  box-shadow: 0 0 0 3px rgba(183, 1, 0, 0.12) !important;
+  outline: none !important;
+  background: var(--color-surface-container-lowest) !important;
+  color: var(--color-on-surface) !important;
+}
+
+.form-label {
+  font-size: 14px !important;
+  font-weight: 600 !important;
+  color: var(--color-on-surface) !important;
+  margin-bottom: 0.4rem !important;
+}
+
+.form-text {
+  color: var(--color-on-surface-variant) !important;
+  font-size: 12px !important;
+}
+
+.input-group-text {
+  background: var(--color-surface-container-low) !important;
+  border: 1px solid var(--color-outline-variant) !important;
+  color: var(--color-on-surface-variant) !important;
+}
+
+/* ============================================================
+   [7] TABLE
+   ============================================================ */
+.table {
+  color: var(--color-on-surface) !important;
+  border-color: var(--color-outline-variant) !important;
+}
+
+.table thead th,
+.table-light th {
+  background: var(--color-surface-container-low) !important;
+  color: var(--color-on-surface-variant) !important;
+  font-weight: 600 !important;
+  font-size: 13px !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.05em !important;
+  border-bottom: 1px solid var(--color-outline-variant) !important;
+  border-color: var(--color-outline-variant) !important;
+}
+
+.table td {
+  border-color: var(--color-outline-variant) !important;
+  vertical-align: middle !important;
+  font-size: 14px !important;
+}
+
+.table-hover > tbody > tr:hover > * {
+  background-color: var(--color-surface-container-low) !important;
+  color: var(--color-on-surface) !important;
+}
+
+.table-light {
+  --bs-table-bg: var(--color-surface-container-low) !important;
+  --bs-table-border-color: var(--color-outline-variant) !important;
+}
+
+/* DataTables wrapper */
+.dataTables_wrapper .dataTables_length select,
+.dataTables_wrapper .dataTables_filter input {
+  border: 1px solid var(--color-outline-variant) !important;
+  border-radius: var(--radius-default) !important;
+  padding: 0.25rem 0.6rem !important;
+  font-size: 13px !important;
+  color: var(--color-on-surface) !important;
+  background: var(--color-surface-container-lowest) !important;
+}
+
+.dataTables_wrapper .dataTables_filter input:focus {
+  border-color: var(--color-primary) !important;
+  box-shadow: 0 0 0 3px rgba(183, 1, 0, 0.12) !important;
+  outline: none !important;
+}
+
+/* ============================================================
+   [8] BADGE / STATUS CHIP
+   ============================================================ */
+.badge,
+.badge-status {
+  border-radius: var(--radius-full) !important;
+  font-size: 12px !important;
+  font-weight: 500 !important;
+  padding: 3px 10px !important;
+}
+
+/* OK / Aktif / Legal */
+.badge-ok,
+.badge-baik,
+.badge-aktif,
+.badge-legal {
+  background: #dcfce7 !important;
+  color: #15803d !important;
+  border-radius: var(--radius-full) !important;
+  font-size: 12px !important;
+  font-weight: 500 !important;
+  padding: 3px 10px !important;
+}
+
+/* Warning / Pending */
+.badge-pending,
+.badge-perlu,
+.badge-warning {
+  background: #fef9c3 !important;
+  color: #a16207 !important;
+  border-radius: var(--radius-full) !important;
+  font-size: 12px !important;
+  font-weight: 500 !important;
+  padding: 3px 10px !important;
+}
+
+/* Error / Anomali / Ilegal / Ditolak */
+.badge-ditolak,
+.badge-rusak,
+.badge-anomali,
+.badge-error,
+.badge-ilegal {
+  background: #fee2e2 !important;
+  color: #b91c1c !important;
+  border-radius: var(--radius-full) !important;
+  font-size: 12px !important;
+  font-weight: 500 !important;
+  padding: 3px 10px !important;
+}
+
+/* Info / Perlu Review */
+.badge-info,
+.badge-review {
+  background: #dbeafe !important;
+  color: #1d4ed8 !important;
+  border-radius: var(--radius-full) !important;
+  font-size: 12px !important;
+  font-weight: 500 !important;
+  padding: 3px 10px !important;
+}
+
+/* Double input */
+.badge-double {
+  background: #ede9fe !important;
+  color: #5b21b6 !important;
+  border-radius: var(--radius-full) !important;
+  font-size: 12px !important;
+  font-weight: 500 !important;
+  padding: 3px 10px !important;
+}
+
+/* Netral / Default */
+.badge-default,
+.badge-netral {
+  background: var(--color-surface-container) !important;
+  color: var(--color-on-surface-variant) !important;
+  border-radius: var(--radius-full) !important;
+}
+
+/* Bootstrap contextual badges override */
+.badge.bg-success  { background: #dcfce7 !important; color: #15803d !important; }
+.badge.bg-warning  { background: #fef9c3 !important; color: #a16207 !important; }
+.badge.bg-danger   { background: #fee2e2 !important; color: #b91c1c !important; }
+.badge.bg-info     { background: #dbeafe !important; color: #1d4ed8 !important; }
+.badge.bg-primary  { background: var(--color-primary) !important; color: var(--color-on-primary) !important; }
+.badge.bg-secondary{ background: var(--color-surface-container) !important; color: var(--color-on-surface-variant) !important; }
+
+/* ============================================================
+   [9] ALERT
+   ============================================================ */
+.alert {
+  border-radius: var(--radius-default) !important;
+  border: 1px solid transparent !important;
+  font-size: 14px !important;
+}
+
+.alert-success {
+  background: #f0fdf4 !important;
+  border-left: 4px solid #15803d !important;
+  color: #15803d !important;
+  border-color: #bbf7d0 !important;
+}
+
+.alert-danger {
+  background: #fef2f2 !important;
+  border-left: 4px solid #b91c1c !important;
+  color: #b91c1c !important;
+  border-color: #fecaca !important;
+}
+
+.alert-warning {
+  background: #fffbeb !important;
+  border-left: 4px solid #a16207 !important;
+  color: #92400e !important;
+  border-color: #fde68a !important;
+}
+
+.alert-info {
+  background: #eff6ff !important;
+  border-left: 4px solid #1d4ed8 !important;
+  color: #1d4ed8 !important;
+  border-color: #bfdbfe !important;
+}
+
+.btn-close {
+  opacity: 0.5 !important;
+}
+
+.btn-close:hover {
+  opacity: 1 !important;
+}
+
+/* ============================================================
+   [10] TYPOGRAPHY SCALE
+   ============================================================ */
+h1, .h1 {
+  font-size: 40px !important;
+  font-weight: 700 !important;
+  letter-spacing: -0.02em !important;
+  line-height: 1.2 !important;
+  color: var(--color-on-surface) !important;
+}
+
+h2, .h2 {
+  font-size: 32px !important;
+  font-weight: 600 !important;
+  letter-spacing: -0.01em !important;
+  line-height: 1.25 !important;
+  color: var(--color-on-surface) !important;
+}
+
+h3, .h3 {
+  font-size: 24px !important;
+  font-weight: 600 !important;
+  line-height: 1.33 !important;
+  color: var(--color-on-surface) !important;
+}
+
+h4, .h4 { font-size: 20px !important; font-weight: 600 !important; color: var(--color-on-surface) !important; }
+h5, .h5 { font-size: 18px !important; font-weight: 600 !important; color: var(--color-on-surface) !important; }
+h6, .h6 { font-size: 16px !important; font-weight: 600 !important; color: var(--color-on-surface) !important; }
+
+/* Page header title */
+.page-title {
+  font-size: 1.4rem !important;
+  font-weight: 700 !important;
+  color: var(--color-primary) !important;
+}
+
+.page-breadcrumb {
+  font-size: 0.8rem !important;
+  color: var(--color-on-surface-variant) !important;
+}
+
+/* Labels / caption */
+.small, small { font-size: 12px !important; }
+
+/* Text utilities override */
+.text-muted { color: var(--color-on-surface-variant) !important; }
+.text-danger { color: var(--color-error) !important; }
+.text-success { color: #15803d !important; }
+.text-primary { color: var(--color-primary) !important; }
+.text-info { color: var(--color-tertiary) !important; }
+
+/* ============================================================
+   [11] NETWORK LINES (page-header motif)
+   ============================================================ */
+.page-header {
+  background-color: var(--color-surface-container-low);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='48' height='48'%3E%3Cpath d='M0 24h48M24 0v48' stroke='%23e9bcb5' stroke-width='0.5' fill='none'/%3E%3Ccircle cx='24' cy='24' r='2' fill='%23e9bcb5'/%3E%3Ccircle cx='0' cy='0' r='1.5' fill='%23e9bcb5'/%3E%3Ccircle cx='48' cy='0' r='1.5' fill='%23e9bcb5'/%3E%3Ccircle cx='0' cy='48' r='1.5' fill='%23e9bcb5'/%3E%3Ccircle cx='48' cy='48' r='1.5' fill='%23e9bcb5'/%3E%3C/svg%3E");
+  background-size: 48px 48px;
+  border-radius: var(--radius-md);
+  padding: 1rem 1.25rem;
+  margin-bottom: 1.5rem;
+  position: relative;
+  overflow: hidden;
+}
+
+.page-header::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, rgba(246,243,242,0.8) 0%, rgba(240,237,237,0.6) 100%);
+  opacity: 0.35;
+  pointer-events: none;
+}
+
+.page-header > * {
+  position: relative;
+  z-index: 1;
+}
+
+/* ============================================================
+   MODAL
+   ============================================================ */
+.modal-content {
+  border: 1px solid var(--color-outline-variant) !important;
+  border-radius: var(--radius-md) !important;
+  box-shadow: var(--shadow-modal) !important;
+}
+
+.modal-header {
+  border-bottom: 1px solid var(--color-outline-variant) !important;
+  background: var(--color-surface-container-low) !important;
+  border-radius: var(--radius-md) var(--radius-md) 0 0 !important;
+}
+
+.modal-footer {
+  border-top: 1px solid var(--color-outline-variant) !important;
+  background: var(--color-surface-container-lowest) !important;
+}
+
+/* ============================================================
+   LIST GROUP
+   ============================================================ */
+.list-group-item {
+  border-color: var(--color-outline-variant) !important;
+  color: var(--color-on-surface) !important;
+  font-size: 14px !important;
+}
+
+.list-group-item-action:hover {
+  background: var(--color-surface-container-low) !important;
+}
+
+/* ============================================================
+   PAGINATION
+   ============================================================ */
+.pagination .page-link {
+  color: var(--color-primary) !important;
+  border-color: var(--color-outline-variant) !important;
+  font-size: 13px !important;
+}
+
+.pagination .page-item.active .page-link {
+  background: var(--color-primary) !important;
+  border-color: var(--color-primary) !important;
+  color: var(--color-on-primary) !important;
+}
+
+.pagination .page-link:hover {
+  background: var(--color-on-primary-container) !important;
+  border-color: var(--color-outline-variant) !important;
+  color: var(--color-primary) !important;
+}
+
+/* ============================================================
+   DROPDOWN
+   ============================================================ */
+.dropdown-menu {
+  border: 1px solid var(--color-outline-variant) !important;
+  border-radius: var(--radius-default) !important;
+  box-shadow: var(--shadow-hover) !important;
+  font-size: 14px !important;
+}
+
+.dropdown-item {
+  color: var(--color-on-surface) !important;
+}
+
+.dropdown-item:hover,
+.dropdown-item:focus {
+  background: var(--color-surface-container-low) !important;
+  color: var(--color-on-surface) !important;
+}
+
+.dropdown-item.active,
+.dropdown-item:active {
+  background: var(--color-primary) !important;
+  color: var(--color-on-primary) !important;
+}
+
+/* ============================================================
+   RADIO BUTTON GROUP (map mode toggle)
+   ============================================================ */
+.btn-check:checked + .btn-outline-primary {
+  background: var(--color-primary) !important;
+  border-color: var(--color-primary) !important;
+  color: var(--color-on-primary) !important;
+}
+
+/* ============================================================
+   SIDEBAR USER SECTION
+   ============================================================ */
+#sidebar [style*="rgba(255,255,255,.08)"],
+#sidebar [style*="rgba(255,255,255, .08)"] {
+  background: rgba(255, 255, 255, 0.08) !important;
+}
+
+/* Sidebar logout button */
+#sidebar form button {
+  background: rgba(255, 255, 255, 0.08) !important;
+  color: rgba(243, 240, 239, 0.7) !important;
+  border-radius: var(--radius-default) !important;
+  transition: background 0.15s ease !important;
+}
+
+#sidebar form button:hover {
+  background: rgba(255, 255, 255, 0.15) !important;
+  color: var(--color-inverse-on-surface) !important;
+}
+
+/* ============================================================
+   ANIMATIONS
+   ============================================================ */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.fade-in { animation: fadeIn 0.3s ease forwards; }
+
+/* ============================================================
+   RESPONSIVE
+   ============================================================ */
+@media (max-width: 767px) {
+  h1, .h1 { font-size: 30px !important; }
+  h2, .h2 { font-size: 24px !important; }
+  .stat-value { font-size: 22px !important; }
+}

@@ -12,61 +12,51 @@
     <!-- Bootstrap Icons -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
     <!-- Google Fonts: Inter -->
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- Tabler Icons -->
+    <link href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/dist/tabler-icons.min.css" rel="stylesheet">
     <!-- DataTables -->
     <link href="https://cdn.datatables.net/1.13.7/css/dataTables.bootstrap5.min.css" rel="stylesheet">
+    <!-- Design System -->
+    <link rel="stylesheet" href="{{ asset('css/design-system.css') }}">
 
     <style>
+        /* ── LAYOUT VARIABLES ── */
         :root {
-            --primary: #1a3a5c;
-            --primary-light: #1e4d7b;
-            --accent: #e8402a;
-            --accent-soft: #fff0ee;
-            --success: #198754;
-            --warning: #e9a100;
-            --danger: #dc3545;
             --sidebar-w: 260px;
             --topbar-h: 56px;
-            --radius: 10px;
-            --shadow: 0 2px 16px rgba(0,0,0,.07);
-            --shadow-sm: 0 1px 4px rgba(0,0,0,.06);
         }
-        * { font-family: 'Inter', sans-serif; }
 
         /* ── LAYOUT ── */
-        body { background: #f0f2f5; color: #1a1a2e; min-height: 100vh; }
+        body { min-height: 100vh; }
 
         #sidebar {
             position: fixed; top: 0; left: 0; bottom: 0;
-            width: var(--sidebar-w); background: var(--primary);
+            width: var(--sidebar-w);
             display: flex; flex-direction: column; z-index: 1040;
             transition: transform .25s ease;
-            box-shadow: 2px 0 16px rgba(0,0,0,.15);
         }
         .sidebar-brand {
-            padding: 1rem 1.25rem; border-bottom: 1px solid rgba(255,255,255,.1);
+            padding: 1rem 1.25rem;
+            border-bottom: 1px solid rgba(255,255,255,.08);
             text-decoration: none;
         }
-        .sidebar-brand-title { font-size: .78rem; font-weight: 600; color: rgba(255,255,255,.7); letter-spacing: .08em; text-transform: uppercase; }
-        .sidebar-brand-name  { font-size: 1rem; font-weight: 700; color: #fff; line-height: 1.2; }
-
         .sidebar-nav { flex: 1; overflow-y: auto; padding: .75rem 0; }
-        .sidebar-label { font-size: .65rem; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; color: rgba(255,255,255,.4); padding: .85rem 1.25rem .35rem; }
         .sidebar-link {
             display: flex; align-items: center; gap: .65rem;
-            padding: .6rem 1.25rem; color: rgba(255,255,255,.8);
+            padding: .6rem 1.25rem;
             text-decoration: none; font-size: .875rem; font-weight: 500;
             border-left: 3px solid transparent; transition: all .15s;
         }
-        .sidebar-link:hover { background: rgba(255,255,255,.07); color: #fff; }
-        .sidebar-link.active { background: rgba(255,255,255,.12); color: #fff; border-left-color: #e8402a; }
         .sidebar-link i { font-size: 1rem; width: 1.25rem; text-align: center; }
+        .sidebar-label { padding: .85rem 1.25rem .35rem; font-size: .65rem; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; }
 
         #topbar {
             position: fixed; top: 0; left: var(--sidebar-w); right: 0; height: var(--topbar-h);
-            background: #fff; border-bottom: 1px solid #e8ecf0;
             display: flex; align-items: center; padding: 0 1.5rem;
-            z-index: 1030; box-shadow: var(--shadow-sm);
+            z-index: 1030;
         }
         #main-content {
             margin-left: var(--sidebar-w);
@@ -75,54 +65,18 @@
             min-height: 100vh;
         }
 
-        /* ── CARDS ── */
-        .card { border: none; border-radius: var(--radius); box-shadow: var(--shadow); }
-        .card-header { background: #fff; border-bottom: 1px solid #f0f2f5; font-weight: 600; }
+        /* Stat card layout base */
         .stat-card {
-            border-radius: var(--radius); padding: 1.25rem 1.5rem;
+            padding: 1.25rem 1.5rem;
             display: flex; flex-direction: row; align-items: center; gap: 1rem;
-            transition: transform .2s, box-shadow .2s;
         }
-        .stat-card:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(0,0,0,.1); }
         .stat-icon {
-            width: 52px; height: 52px; border-radius: 12px;
-            display: grid; place-items: center; font-size: 1.5rem; flex-shrink: 0;
+            font-size: 1.4rem; flex-shrink: 0;
+            display: grid; place-items: center;
         }
-        .stat-value { font-size: 1.75rem; font-weight: 700; line-height: 1; }
-        .stat-label { font-size: .8rem; color: #6c757d; margin-top: .2rem; }
-
-        /* ── BADGES ── */
-        .badge-status { font-size: .72rem; font-weight: 600; padding: .3em .7em; border-radius: 20px; }
-        .badge-ok { background: #d1fae5; color: #065f46; }
-        .badge-pending { background: #fef3c7; color: #92400e; }
-        .badge-ditolak { background: #fee2e2; color: #991b1b; }
-        .badge-double { background: #ede9fe; color: #5b21b6; }
-        .badge-baik { background: #d1fae5; color: #065f46; }
-        .badge-perlu { background: #fef3c7; color: #92400e; }
-        .badge-rusak { background: #fee2e2; color: #991b1b; }
-        .badge-anomali { background: #fee2e2; color: #991b1b; }
-
-        /* ── BUTTONS ── */
-        .btn-primary { background: var(--primary); border-color: var(--primary); }
-        .btn-primary:hover { background: var(--primary-light); border-color: var(--primary-light); }
-        .btn-accent { background: var(--accent); border-color: var(--accent); color: #fff; }
-        .btn-accent:hover { background: #c73420; color: #fff; }
-
-        /* ── TABLE ── */
-        .table-hover tbody tr:hover { background: #f8f9ff; }
-        .table th { font-size: .8rem; font-weight: 600; text-transform: uppercase; letter-spacing: .05em; color: #6c757d; }
-
-        /* ── PAGE HEADER ── */
-        .page-header { margin-bottom: 1.5rem; }
-        .page-title { font-size: 1.4rem; font-weight: 700; color: var(--primary); margin: 0; }
-        .page-breadcrumb { font-size: .8rem; color: #6c757d; }
 
         /* ── MAP ── */
-        #dashboard-map { height: 420px; border-radius: var(--radius); overflow: hidden; }
-
-        /* ── ANIMATIONS ── */
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
-        .fade-in { animation: fadeIn .3s ease forwards; }
+        #dashboard-map { height: 420px; overflow: hidden; border-radius: var(--radius-md); }
 
         /* ── SCROLLBAR ── */
         .sidebar-nav::-webkit-scrollbar { width: 4px; }

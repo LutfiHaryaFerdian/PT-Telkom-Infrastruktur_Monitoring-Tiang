@@ -27,10 +27,29 @@ Route::middleware('guest')->group(function () {
 
 Route::post('/logout', [LoginController::class, 'logout'])->name('logout')->middleware('auth');
 
-// ============================================================
-// REDIRECT ROOT
-// ============================================================
-Route::get('/', fn () => redirect()->route('dashboard'));
+Route::get('/', function () {
+    if (auth()->check()) return redirect()->route('dashboard');
+
+    $totalTiang = \App\Models\TiangTelekomunikasi::whereNull('deleted_at')->count();
+    $totalSto = \App\Models\Sto::whereNull('deleted_at')->count();
+    
+    // Verifikasi rate (%)
+    $totalVerified = \App\Models\TiangTelekomunikasi::whereNull('deleted_at')->where('status_verifikasi', 'ok')->count();
+    $verifikasiRate = $totalTiang > 0 ? round(($totalVerified / $totalTiang) * 100, 1) : 0.0;
+    
+    // Anomali Terselesaikan
+    $anomaliSelesai = \App\Models\AnomalyLog::where('status', 'resolved')->count();
+
+    return view('landing', compact('totalTiang', 'totalSto', 'verifikasiRate', 'anomaliSelesai'));
+})->name('landing');
+
+Route::get('/public-map-markers', function () {
+    $markers = \App\Models\TiangTelekomunikasi::whereNull('deleted_at')
+        ->select('id', 'kode_tiang', 'latitude', 'longitude', 'status_verifikasi', 'has_anomali')
+        ->limit(1000)
+        ->get();
+    return response()->json($markers);
+});
 
 // ============================================================
 // AUTHENTICATED ROUTES
