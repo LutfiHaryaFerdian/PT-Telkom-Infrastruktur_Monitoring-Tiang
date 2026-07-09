@@ -4,70 +4,86 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Login — Monitoring Infrastruktur Tiang</title>
+    <!-- Bootstrap 5 -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Bootstrap Icons -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+    <!-- Google Fonts: Inter -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Design System -->
+    <link rel="stylesheet" href="{{ asset('css/design-system.css') }}">
     <style>
         * { font-family: 'Inter', sans-serif; }
         body {
-            background: linear-gradient(135deg, #1a3a5c 0%, #0d2035 50%, #1e0a2e 100%);
+            background-color: var(--color-background);
+            color: var(--color-on-background);
             min-height: 100vh; display: flex; align-items: center; justify-content: center;
             position: relative; overflow: hidden;
         }
         body::before {
             content: ''; position: absolute; inset: 0;
-            background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.02'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+            background-image: radial-gradient(rgba(183, 1, 0, 0.05) 1px, transparent 1px);
+            background-size: 24px 24px;
+            pointer-events: none;
         }
 
         .login-card {
-            background: rgba(255,255,255,.97); border-radius: 20px;
-            box-shadow: 0 24px 60px rgba(0,0,0,.3); width: 100%; max-width: 420px;
+            background: var(--color-surface-container-lowest);
+            border: 1px solid var(--color-outline-variant);
+            border-radius: var(--radius-large);
+            box-shadow: var(--shadow-modal);
+            width: 100%; max-width: 420px;
             padding: 2.5rem 2.5rem; position: relative; z-index: 1;
         }
         .login-logo {
-            width: 64px; height: 64px; background: linear-gradient(135deg, #e8402a, #c73420);
-            border-radius: 16px; display: grid; place-items: center; margin: 0 auto 1.5rem;
-            box-shadow: 0 8px 20px rgba(232,64,42,.35);
+            width: 64px; height: 64px; 
+            background: linear-gradient(135deg, var(--color-primary), var(--color-primary-hover));
+            border-radius: var(--radius-default); 
+            display: grid; place-items: center; margin: 0 auto 1.5rem;
+            box-shadow: 0 8px 20px rgba(183, 1, 0, 0.25);
         }
-        .login-title { font-size: 1.5rem; font-weight: 700; color: #1a3a5c; text-align: center; }
-        .login-subtitle { font-size: .85rem; color: #6c757d; text-align: center; margin-bottom: 2rem; }
+        .login-title { font-size: 1.5rem; font-weight: 700; color: var(--color-on-surface); text-align: center; }
+        .login-subtitle { font-size: .85rem; color: var(--color-on-surface-variant); text-align: center; margin-bottom: 2rem; }
 
         .form-control {
-            border-radius: 10px; padding: .7rem 1rem; border: 1.5px solid #e2e8f0;
+            border-radius: var(--radius-default); padding: .7rem 1rem; border: 1.5px solid var(--color-outline);
+            background-color: var(--color-surface-container-low);
+            color: var(--color-on-surface);
             font-size: .9rem; transition: border-color .2s, box-shadow .2s;
         }
         .form-control:focus {
-            border-color: #1a3a5c; box-shadow: 0 0 0 3px rgba(26,58,92,.12);
+            border-color: var(--color-primary); box-shadow: 0 0 0 3px rgba(183, 1, 0, 0.15);
+            background-color: var(--color-surface-container-lowest);
         }
-        .form-label { font-size: .85rem; font-weight: 600; color: #374151; }
+        .form-label { font-size: .85rem; font-weight: 600; color: var(--color-on-surface); }
         .input-group-text {
-            border-radius: 10px 0 0 10px; border: 1.5px solid #e2e8f0;
-            background: #f8fafc; color: #6c757d;
+            border-radius: var(--radius-default) 0 0 var(--radius-default); border: 1.5px solid var(--color-outline);
+            background-color: var(--color-surface-container-lowest); color: var(--color-on-surface-variant);
         }
-        .input-group .form-control { border-radius: 0 10px 10px 0; border-left: none; }
-        .input-group:focus-within .input-group-text { border-color: #1a3a5c; }
+        .input-group .form-control { border-radius: 0 var(--radius-default) var(--radius-default) 0; border-left: none; }
+        .input-group:focus-within .input-group-text { border-color: var(--color-primary); }
 
         .btn-login {
-            background: linear-gradient(135deg, #1a3a5c, #1e4d7b);
-            color: #fff; border: none; border-radius: 10px;
+            background: var(--color-primary);
+            color: var(--color-on-primary); border: none; border-radius: var(--radius-default);
             padding: .75rem; font-weight: 600; font-size: .95rem;
             width: 100%; transition: all .2s; letter-spacing: .02em;
-            box-shadow: 0 4px 12px rgba(26,58,92,.3);
+            box-shadow: 0 4px 12px rgba(183, 1, 0, 0.2);
         }
         .btn-login:hover {
-            background: linear-gradient(135deg, #1e4d7b, #245e96);
-            transform: translateY(-1px); box-shadow: 0 6px 16px rgba(26,58,92,.35);
-            color: #fff;
+            background: var(--color-primary-hover);
+            transform: translateY(-1px); box-shadow: 0 6px 16px rgba(183, 1, 0, 0.3);
+            color: var(--color-on-primary);
         }
         .btn-login:active { transform: translateY(0); }
 
-        .divider { border-top: 1px solid #f0f2f5; margin: 1.5rem 0; }
-        .footer-text { font-size: .78rem; color: #9ca3af; text-align: center; }
+        .divider { border-top: 1px solid var(--color-outline-variant); margin: 1.5rem 0; }
+        .footer-text { font-size: .78rem; color: var(--color-on-surface-variant); text-align: center; }
 
         /* Animated background elements */
         .bg-circle {
-            position: absolute; border-radius: 50%; opacity: .07;
-            background: radial-gradient(circle, #e8402a, transparent);
+            position: absolute; border-radius: 50%; opacity: .05;
+            background: radial-gradient(circle, var(--color-primary), transparent);
             animation: float 8s ease-in-out infinite;
         }
         @keyframes float {
