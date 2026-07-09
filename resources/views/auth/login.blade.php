@@ -138,9 +138,12 @@
                 <input type="checkbox" id="remember" name="remember" class="form-check-input me-2">
                 <label for="remember" class="form-check-label" style="font-size:.85rem;color:#6c757d;">Ingat saya</label>
             </div>
-            <button type="submit" class="btn-login">
+            <button type="submit" class="btn-login mb-2">
                 <i class="bi bi-box-arrow-in-right me-2"></i>Masuk
             </button>
+            <a href="{{ route('landing') }}" class="btn btn-outline-secondary w-100 py-2 d-flex align-items-center justify-content-center" style="border-radius: var(--radius-default); font-size: .9rem; font-weight: 500; height: 42px;">
+                <i class="bi bi-arrow-left me-2"></i>Kembali ke Beranda
+            </a>
         </form>
 
         <div class="divider"></div>
