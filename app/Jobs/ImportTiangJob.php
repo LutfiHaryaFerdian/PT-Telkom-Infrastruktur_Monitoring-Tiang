@@ -257,8 +257,14 @@ class ImportTiangJob implements ShouldQueue
             Sto::where('id', $sto->id)->lockForUpdate()->first();
 
             // === JENIS TIANG ===
-            $jenisTiang = JenisTiang::where('nama', $jenisTiangNama)->first()
-                ?? JenisTiang::first(); // fallback ke pertama
+            if (!empty($jenisTiangNama)) {
+                $jenisTiang = JenisTiang::firstOrCreate(
+                    ['nama' => $jenisTiangNama],
+                    ['keterangan' => 'Ditambahkan otomatis saat import']
+                );
+            } else {
+                $jenisTiang = JenisTiang::first(); // fallback ke pertama
+            }
 
             // === KONDISI TIANG ===
             $kondisiTiang = KondisiTiang::where('nama', $kondisiNama)->first()

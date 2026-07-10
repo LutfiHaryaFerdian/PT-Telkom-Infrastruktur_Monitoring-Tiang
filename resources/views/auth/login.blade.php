@@ -147,7 +147,7 @@
         </form>
 
         <div class="divider"></div>
-        <p class="footer-text">© {{ date('Y') }} PT Telkom Infrastruktur Indonesia. All rights reserved.</p>
+        <p class="footer-text">© {{ date('Y') }} Ilmu Komputer - Universitas Lampung. All rights reserved.</p>
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>

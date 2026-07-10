@@ -102,6 +102,7 @@ Proses import didesain untuk menangani data dalam skala besar secara aman menggu
 2.  **Validasi Format:** Sistem memeriksa integritas file menggunakan parser `SimpleXLSX`.
 3.  **Baris per Baris (Looping & Batch):**
     *   Sistem mencari / membuat STO sesuai kode di Excel secara otomatis.
+    *   Sistem mendeteksi kolom `Jenis Tiang`. Jika terdapat jenis tiang baru yang belum ada di database (dan kolom tidak kosong), sistem akan otomatis menambahkannya ke tabel master `jenis_tiang`. Jika kolom kosong, sistem akan menggunakan jenis tiang pertama sebagai fallback.
     *   Memeriksa apakah `Kode Tiang` sudah ada di database (mencegah redundansi data).
     *   Validasi koordinat GPS (apakah latitude & longitude valid secara geografis).
 4.  **Pencatatan Kesalahan (Error Logging):** Jika ada baris data yang tidak memenuhi kriteria validasi, sistem mencatat detail kesalahan (nomor baris & kolom yang salah) ke dalam tabel `import_history_errors` agar dapat diunduh oleh admin untuk diperbaiki.
@@ -180,3 +181,88 @@ Sistem memiliki modul validasi otomatis untuk memverifikasi integritas data tian
     *   **Legalitas ISP**: Grafik donut baru yang menampilkan status legalitas ISP penumpang kabel tiang (Legal, Perlu Verifikasi, Ilegal).
 *   **Keamanan Content Security Policy (CSP)**:
     *   Domain CDN eksternal untuk leaflet-heat (`https://cdn.jsdelivr.net`) telah didaftarkan dengan aman pada `SecurityHeadersMiddleware.php` bagian `script-src` dan `connect-src`.
+
+---
+
+## 7. Modul Tindak Lanjut ISP Penumpang (ISP Passenger Follow-up System)
+
+Modul ini memfasilitasi administrasi PT Telkom untuk mencatat, melacak, dan menindaklanjuti ISP/Operator pihak ketiga yang menumpangkan kabel telekomunikasinya secara ilegal atau tidak berizin pada aset tiang Telkom.
+
+### **A. Struktur Tabel Database Baru & Hubungannya**
+Sistem menggunakan 3 tabel baru serta 1 modifikasi kolom pada tabel pivot `tiang_operator`:
+
+```mermaid
+erDiagram
+    TIANG_OPERATOR ||--o{ ISP_SURAT : "memiliki (1:N)"
+    TIANG_OPERATOR ||--o{ ISP_FOLLOWUP : "memiliki (1:N)"
+    ISP_SURAT ||--o{ ISP_BALASAN : "memiliki (1:N)"
+
+    TIANG_OPERATOR {
+        enum status_tindaklanjut
+        timestamp tindaklanjut_updated_at
+    }
+    ISP_SURAT {
+        bigint id PK
+        bigint tiang_operator_id FK
+        string nomor_surat
+        enum jenis_surat
+        date tanggal_surat
+        string perihal
+        text isi_ringkasan
+        string file_surat
+        bigint dikirim_oleh FK
+    }
+    ISP_BALASAN {
+        bigint id PK
+        bigint isp_surat_id FK
+        date tanggal_balasan
+        text isi_ringkasan
+        string file_balasan
+        enum status_balasan
+        bigint dicatat_oleh FK
+    }
+    ISP_FOLLOWUP {
+        bigint id PK
+        bigint tiang_operator_id FK
+        date tanggal_followup
+        enum metode
+        text catatan
+        enum hasil
+        string file_bukti
+        bigint dilakukan_oleh FK
+    }
+```
+
+*   **`isp_surat`**: Menyimpan data surat resmi (Pemberitahuan, Peringatan 1/2/3, Tagihan, dll.) yang dilayangkan kepada ISP pelanggar.
+*   **`isp_balasan`**: Menyimpan rekam tanggapan dari pihak ISP terhadap surat yang dikirimkan.
+*   **`isp_followup`**: Log aktivitas tindak lanjut langsung di lapangan atau meja perundingan (rapat, whatsapp, kunjungan langsung).
+*   **`status_tindaklanjut`** (pada `tiang_operator`): State machine utama status hubungan legalisasi ISP di tiang.
+
+---
+
+### **B. State Machine & Alur Perubahan Status Otomatis**
+Logika transisi status diatur secara terpusat di dalam class `App\Services\TindakLanjutService` dengan ketentuan alur berikut:
+
+1.  **Belum Disurati (Default):** Belum ada surat (`isp_surat`) yang tercatat dikirim ke ISP untuk tiang tersebut.
+2.  **Sudah Disurati:** Minimal ada 1 surat yang dikirim, belum ada balasan, dan durasi sejak surat terakhir kurang dari **14 hari** (nilai default).
+3.  **Perlu Follow-up:** Belum ada balasan, tetapi durasi sejak surat terakhir dikirim sudah **>= 14 hari** (memerlukan tindakan kejar/follow-up oleh admin).
+4.  **Ada Balasan:** ISP telah mengirimkan tanggapan surat (`isp_balasan` terkait).
+5.  **Selesai (Hard-Lock Manual):** Status ini diatur secara manual oleh Administrator jika proses sewa/tertib kabel telah disepakati dan legal. Sekali status diatur ke `selesai`, status dikunci dan tidak akan berubah secara otomatis oleh kalkulasi sistem (State Lock Override).
+
+*Semua perubahan status ini dipicu secara real-time via Eloquent model events saat surat, balasan, atau follow-up dibuat atau diubah.*
+
+---
+
+### **C. Optimalisasi Performa & UX Modul Tindak Lanjut**
+*   **Anti N+1 Queries (Strict Eager Loading):** Untuk mencegah overhead query berantai pada halaman timeline dan detail, controller menggunakan strict loading untuk merelasikan user pencatat (`dikirimOleh`, `dicatatOleh`, `dilakukanOleh`).
+*   **Sidebar Notification Badge:** Menampilkan badge jumlah kasus berstatus `Perlu Follow-up` secara real-time. Untuk mencegah overhead database, data ini disimpan di cache Redis/File dengan key `tindaklanjut_perlu_followup_count` dan otomatis dihapus (`Cache::forget`) setiap kali status berubah.
+*   **Asynchronous Timeline View:** Menggunakan modular AJAX partials (`tindaklanjut/partials/timeline.blade.php`) untuk me-refresh riwayat surat menyurat secara dinamis tanpa melakukan reload halaman penuh.
+
+---
+
+## 8. Penyempurnaan Alur Navigasi & UI Tambahan
+
+*   **Pemisah Grid Dashboard:** Sesuai permintaan visual, letak panel info total District dan Area pada dashboard telah ditukar agar visualisasi alur cakupan operasional lebih intuitif.
+*   **Akses Kembali Landing Page:** Halaman autentikasi login kini dilengkapi dengan tombol "Kembali ke Beranda" untuk mempermudah navigasi publik kembali ke landing page tanpa perlu menggunakan tombol back browser.
+*   **Peningkatan Kontras Teks Footer:** Warna tulisan judul pada footer landing page ("TIF District Lampung" & "ALAMAT") dipaksa menjadi putih solid menggunakan flag `!important` untuk menimpa class warna bawaan dari berkas global `design-system.css`, memastikan keterbacaan yang optimal pada latar belakang gelap.
+

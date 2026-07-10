@@ -920,7 +920,7 @@
             
             <div class="d-flex flex-column flex-md-row justify-content-between align-items-center gap-2">
                 <div style="font-size: 12px; color: rgba(243,240,239,0.5);">
-                    © 2026 Ilmu Komputer - Universitas Lampung. Seluruh Hak Cipta Dilindungi.
+                    © 2026 Ilmu Komputer - Universitas Lampung. All rights reserved.
                 </div>
             </div>
         </div>
