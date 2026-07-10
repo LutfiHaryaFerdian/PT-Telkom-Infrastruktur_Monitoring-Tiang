@@ -113,20 +113,27 @@ class DashboardApiController extends Controller
                 ])
                 ->toArray();
 
-            $perOperatorTop5 = DB::table('tiang_operator')
+            $operatorTindakLanjut = DB::table('tiang_operator')
                 ->join('operator_isp', 'operator_isp.id', '=', 'tiang_operator.operator_id')
                 ->join('tiang_telekomunikasi', 'tiang_telekomunikasi.id', '=', 'tiang_operator.tiang_id')
                 ->whereNull('tiang_telekomunikasi.deleted_at')
                 ->whereNull('operator_isp.deleted_at')
                 ->when($tiangIds->isNotEmpty(), fn($q) => $q->whereIn('tiang_operator.tiang_id', $tiangIds))
-                ->selectRaw('operator_isp.nama_operator, COUNT(*) as total')
+                ->whereIn('tiang_operator.status_tindaklanjut', ['belum_disurati', 'perlu_followup'])
+                ->selectRaw("
+                    operator_isp.nama_operator,
+                    COUNT(CASE WHEN tiang_operator.status_tindaklanjut = 'belum_disurati' THEN 1 END) as belum_disurati,
+                    COUNT(CASE WHEN tiang_operator.status_tindaklanjut = 'perlu_followup' THEN 1 END) as perlu_followup,
+                    COUNT(*) as total
+                ")
                 ->groupBy('operator_isp.nama_operator')
                 ->orderByDesc('total')
-                ->limit(5)
                 ->get()
                 ->map(fn ($item) => [
                     'nama_operator' => $item->nama_operator,
-                    'total'         => (int)$item->total,
+                    'belum_disurati' => (int)$item->belum_disurati,
+                    'perlu_followup' => (int)$item->perlu_followup,
+                    'total'          => (int)$item->total,
                 ])
                 ->toArray();
 
@@ -174,6 +181,12 @@ class DashboardApiController extends Controller
                 ->pluck('total', 'status_legalitas')
                 ->all();
 
+            $tindakLanjutCounts = (clone $tiangOperatorBase)
+                ->selectRaw('status_tindaklanjut, COUNT(*) as total')
+                ->groupBy('status_tindaklanjut')
+                ->pluck('total', 'status_tindaklanjut')
+                ->all();
+
             $legalitasBreakdown = [
                 'legal' => [
                     'jumlah' => $legalitasCounts['legal'] ?? 0,
@@ -203,7 +216,7 @@ class DashboardApiController extends Controller
                 'tiang_pending_verifikasi' => $tiangPendingVerifikasi,
                 'per_sto'                  => $perSto,
                 'per_kondisi'              => $perKondisi,
-                'per_operator_top5'        => $perOperatorTop5,
+                'operator_tindak_lanjut'   => $operatorTindakLanjut,
                 // New additions:
                 'kondisi_nok'              => $tiangKondisiNok,
                 'kondisi_nok_percent'      => $totalTiang > 0 ? round(($tiangKondisiNok / $totalTiang) * 100, 2) : 0.0,
@@ -213,6 +226,13 @@ class DashboardApiController extends Controller
                 'verifikasi_breakdown'     => $verifikasiBreakdown,
                 'legalitas_isp_breakdown'  => $legalitasBreakdown,
                 'perlu_followup'           => $perluFollowup,
+                'tindaklanjut_counts'      => [
+                    'belum_disurati' => (int)($tindakLanjutCounts['belum_disurati'] ?? 0),
+                    'sudah_disurati' => (int)($tindakLanjutCounts['sudah_disurati'] ?? 0),
+                    'ada_balasan'    => (int)($tindakLanjutCounts['ada_balasan'] ?? 0),
+                    'perlu_followup' => (int)($tindakLanjutCounts['perlu_followup'] ?? 0),
+                    'selesai'        => (int)($tindakLanjutCounts['selesai'] ?? 0),
+                ],
             ];
         });
 

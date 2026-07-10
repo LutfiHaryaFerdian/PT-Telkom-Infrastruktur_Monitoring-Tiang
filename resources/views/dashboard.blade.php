@@ -14,6 +14,29 @@
 .map-legend-item { display: flex; align-items: center; gap: .4rem; margin-bottom: .25rem; }
 .legend-dot { width: 12px; height: 12px; border-radius: 50%; flex-shrink: 0; }
 .search-on-map { position: absolute; top: 10px; left: 50%; transform: translateX(-50%); z-index: 999; width: 280px; }
+
+/* === Tindak Lanjut ISP Panel — Light Theme === */
+.tl-panel { background: #fff; border: 1px solid #e9ecef; border-radius: 14px; padding: 1.4rem 1.6rem; margin-bottom: 1.25rem; box-shadow: 0 1px 3px rgba(28,27,27,.06), 0 1px 2px rgba(28,27,27,.04); }
+.tl-panel-title { color: #6c757d; font-size: .68rem; font-weight: 600; letter-spacing: .09em; text-transform: uppercase; margin-bottom: .1rem; }
+.tl-panel-heading { color: #1c1b1b; font-size: 1.05rem; font-weight: 700; margin-bottom: 1.1rem; display: flex; align-items: center; gap: .5rem; }
+.tl-stat-card { background: #f8f9fa; border: 1px solid #e9ecef; border-radius: 10px; padding: .85rem 1rem; text-align: center; transition: background .2s, border-color .2s; }
+.tl-stat-card:hover { background: #fff0f0; border-color: #f5c0bc; }
+.tl-stat-num { font-size: 2rem; font-weight: 800; line-height: 1; margin-bottom: .2rem; }
+.tl-stat-label { font-size: .68rem; font-weight: 500; text-transform: uppercase; letter-spacing: .06em; color: #6c757d; }
+.tl-divider { border-top: 1px solid #e9ecef; margin: 1.1rem 0; }
+.tl-table { width: 100%; font-size: .82rem; color: #1c1b1b; }
+.tl-table th { color: #6c757d; font-size: .67rem; font-weight: 600; text-transform: uppercase; letter-spacing: .07em; padding: .3rem .5rem; border-bottom: 1px solid #e9ecef; }
+.tl-table td { padding: .4rem .5rem; border-bottom: 1px solid #f1f3f5; vertical-align: middle; }
+.tl-table tr:last-child td { border-bottom: none; }
+.tl-table tr:hover td { background: #fdf5f5; }
+.tl-badge { display: inline-block; padding: .18rem .55rem; border-radius: 20px; font-size: .68rem; font-weight: 700; }
+.tl-badge-red { background: #fde8e8; color: #b70100; border: 1px solid #f5c0bc; }
+.tl-badge-orange { background: #fff2e8; color: #c84b00; border: 1px solid #fcd5a8; }
+.tl-progress-wrap { height: 5px; background: #e9ecef; border-radius: 3px; overflow: hidden; min-width: 60px; }
+.tl-progress-bar { height: 100%; border-radius: 3px; transition: width .45s ease; }
+.tl-section-label { color: #6c757d; font-size: .67rem; font-weight: 600; text-transform: uppercase; letter-spacing: .09em; margin-bottom: .6rem; }
+.tl-link { color: #b70100; font-size: .72rem; font-weight: 600; text-decoration: none; transition: color .15s; }
+.tl-link:hover { color: #930100; text-decoration: underline; }
 </style>
 @endpush
 
@@ -111,9 +134,84 @@
     @endforeach
 </div>
 
+<!-- ═══════════════════════════════════════════════════════════
+     TINDAK LANJUT ISP — Panel (setelah baris stat card ke-2)
+════════════════════════════════════════════════════════════════ -->
+<div class="tl-panel">
+    <div class="tl-panel-title">Pemantauan Komunikasi ISP</div>
+    <div class="tl-panel-heading">
+        <i class="bi bi-envelope-paper-fill" style="color:#b70100"></i>
+        Status Tindak Lanjut ISP Penumpang
+        <a href="{{ route('tindaklanjut.index') }}" class="ms-auto tl-link">
+            Lihat semua <i class="bi bi-arrow-right"></i>
+        </a>
+    </div>
+
+    {{-- 5 Status Mini Cards --}}
+    <div class="row g-2 mb-0" id="tl-status-row">
+        <div class="col">
+            <div class="tl-stat-card">
+                <div class="tl-stat-num" id="tl-num-belum" style="color:#b70100">—</div>
+                <div class="tl-stat-label">Belum Disurati</div>
+            </div>
+        </div>
+        <div class="col">
+            <div class="tl-stat-card">
+                <div class="tl-stat-num" id="tl-num-sudah" style="color:#198754">—</div>
+                <div class="tl-stat-label">Sudah Disurati</div>
+            </div>
+        </div>
+        <div class="col">
+            <div class="tl-stat-card">
+                <div class="tl-stat-num" id="tl-num-balasan" style="color:#0d6efd">—</div>
+                <div class="tl-stat-label">Ada Balasan</div>
+            </div>
+        </div>
+        <div class="col">
+            <div class="tl-stat-card">
+                <div class="tl-stat-num" id="tl-num-followup" style="color:#c84b00">—</div>
+                <div class="tl-stat-label">Perlu Follow-up</div>
+            </div>
+        </div>
+        <div class="col">
+            <div class="tl-stat-card">
+                <div class="tl-stat-num" id="tl-num-selesai" style="color:#157347">—</div>
+                <div class="tl-stat-label">Selesai</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="tl-divider"></div>
+
+    {{-- Per-Operator Breakdown Table --}}
+    <div class="col-12">
+        <div class="tl-section-label">
+            <i class="bi bi-wifi me-1"></i> Rincian Per Operator (Belum Disurati &amp; Perlu Follow-up)
+        </div>
+        <div style="max-height: 200px; overflow-y: auto;">
+            <table class="tl-table" id="tl-operator-table">
+                <thead>
+                    <tr>
+                        <th style="width:35%">Operator ISP</th>
+                        <th class="text-center">Belum Disurati</th>
+                        <th class="text-center">Perlu Follow-up</th>
+                        <th style="width:28%">Proporsi</th>
+                        <th class="text-end">Total</th>
+                    </tr>
+                </thead>
+                <tbody id="tl-operator-tbody">
+                    <tr><td colspan="5" class="text-center" style="color:#6c757d;padding:1rem 0">
+                        <span class="spinner-border spinner-border-sm me-1" style="width:12px;height:12px"></span> Memuat...
+                    </td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
 <!-- Charts Row -->
 <div class="row g-3 mb-4">
-    <div class="col-lg-6">
+    <div class="col-lg-7">
         <div class="card h-100">
             <div class="card-header py-3">
                 <h6 class="mb-0"><i class="bi bi-bar-chart me-2"></i>Tiang per STO (Top 10)</h6>
@@ -124,7 +222,7 @@
             </div>
         </div>
     </div>
-    <div class="col-lg-3">
+    <div class="col-lg-5">
         <div class="card h-100">
             <div class="card-header py-3">
                 <h6 class="mb-0"><i class="bi bi-pie-chart me-2"></i>Breakdown Kondisi</h6>
@@ -132,17 +230,6 @@
             <div class="card-body d-flex align-items-center justify-content-center">
                 <canvas id="chartKondisi" height="200"></canvas>
                 <p class="text-center text-muted small d-none" id="chartKondisiEmpty">Belum ada data</p>
-            </div>
-        </div>
-    </div>
-    <div class="col-lg-3">
-        <div class="card h-100">
-            <div class="card-header py-3">
-                <h6 class="mb-0"><i class="bi bi-bar-chart-steps me-2"></i>Top 5 Operator</h6>
-            </div>
-            <div class="card-body">
-                <canvas id="chartOperator" height="200"></canvas>
-                <p class="text-center text-muted small d-none" id="chartOperatorEmpty">Belum ada data</p>
             </div>
         </div>
     </div>
@@ -261,7 +348,7 @@
 <script>
 // ── STATE ──────────────────────────────────────────────────────
 let currentFilter = @json($filter ?? []);
-let chartSto, chartKondisi, chartOperator, chartVerifikasi, chartLegalitas;
+let chartSto, chartKondisi, chartVerifikasi, chartLegalitas;
 let heatLayer = null;
 let currentMapMode = 'cluster'; // 'cluster' or 'heatmap'
 
@@ -495,6 +582,48 @@ async function loadStats() {
         if (el) el.textContent = (s[k] ?? 0).toLocaleString('id-ID');
     });
 
+    // ── Tindak Lanjut ISP Panel ────────────────────────────────
+    const tlC = s.tindaklanjut_counts || {};
+    const tlTotal = (tlC.belum_disurati||0) + (tlC.sudah_disurati||0) + (tlC.ada_balasan||0) + (tlC.perlu_followup||0) + (tlC.selesai||0);
+    const setTl = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = (val ?? 0).toLocaleString('id-ID'); };
+    setTl('tl-num-belum',   tlC.belum_disurati);
+    setTl('tl-num-sudah',   tlC.sudah_disurati);
+    setTl('tl-num-balasan', tlC.ada_balasan);
+    setTl('tl-num-followup',tlC.perlu_followup);
+    setTl('tl-num-selesai', tlC.selesai);
+
+    // Per-operator table
+    const opData = Array.isArray(s?.operator_tindak_lanjut) ? s.operator_tindak_lanjut : [];
+    const tbody = document.getElementById('tl-operator-tbody');
+    if (tbody) {
+        if (opData.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="5" class="text-center" style="color:#6c757d;padding:1rem 0">Tidak ada kasus aktif</td></tr>`;
+        } else {
+            const maxTotal = Math.max(...opData.map(x => x.total), 1);
+            tbody.innerHTML = opData.map(op => {
+                const pctBelum    = Math.round((op.belum_disurati / maxTotal) * 100);
+                const pctFollowup = Math.round((op.perlu_followup  / maxTotal) * 100);
+                return `
+                <tr>
+                    <td><span style="color:#1c1b1b;font-weight:600">${op.nama_operator}</span></td>
+                    <td class="text-center"><span class="tl-badge tl-badge-red">${op.belum_disurati.toLocaleString('id-ID')}</span></td>
+                    <td class="text-center"><span class="tl-badge tl-badge-orange">${op.perlu_followup.toLocaleString('id-ID')}</span></td>
+                    <td>
+                        <div style="display:flex;gap:3px;align-items:center">
+                            <div class="tl-progress-wrap" style="flex:1">
+                                <div class="tl-progress-bar" style="width:${pctBelum}%;background:linear-gradient(90deg,#b70100,#e53e3e)"></div>
+                            </div>
+                            <div class="tl-progress-wrap" style="flex:1">
+                                <div class="tl-progress-bar" style="width:${pctFollowup}%;background:linear-gradient(90deg,#c84b00,#f97316)"></div>
+                            </div>
+                        </div>
+                    </td>
+                    <td class="text-end" style="color:#495057;font-weight:600">${op.total.toLocaleString('id-ID')}</td>
+                </tr>`;
+            }).join('');
+        }
+    }
+
     const fmtPct = (val) => String(val ?? 0).replace('.', ',');
 
     // Percentage stats
@@ -538,9 +667,7 @@ async function loadStats() {
     updateDonut(chartKondisi, kondisiLabels, kondisiData.map(x => x.total ?? x.jumlah),
         kondisiData.map(x => kondisiColors[x.kondisi_level || x.level] || '#6c757d'), 'chartKondisiEmpty');
 
-    // Chart Operator
-    const opData = Array.isArray(s?.per_operator_top5) ? s.per_operator_top5 : [];
-    updateHBar(chartOperator, opData.map(x => x.nama_operator), opData.map(x => x.total), 'chartOperatorEmpty');
+    // (chartOperator widget removed — data shown in the tl-panel above)
 
     // Tabel Persentase per STO
     const stoTableBody = document.querySelector('#sto-anomali-table tbody');
@@ -644,11 +771,6 @@ function initCharts() {
         options: { responsive: true, cutout: '65%', plugins: { legend: { position: 'bottom', labels: { boxWidth: 12, padding: 8 } } } }
     });
 
-    chartOperator = new Chart(document.getElementById('chartOperator'), {
-        type: 'bar',
-        data: { labels: [], datasets: [{ data: [], backgroundColor: '#0d9488', borderRadius: 4, label: 'Tiang' }] },
-        options: { indexAxis: 'y', responsive: true, plugins: { legend: { display: false } }, scales: { x: { beginAtZero: true, ticks: { precision: 0 } } } }
-    });
 
     chartVerifikasi = new Chart(document.getElementById('chartVerifikasi'), {
         type: 'doughnut',
